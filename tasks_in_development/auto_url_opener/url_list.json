@@ -1,0 +1,60 @@
+{
+
+    "OnStartup": {
+        "CalendarWeekly": {
+            "URL": "https://calendar.google.com/calendar/u/0/r/week",
+            "delay": "10m",
+            "varianceDelay": 0.4,
+            "Day": "All"
+        },
+
+        "CalendarMonthly": {
+            "URL": "https://calendar.google.com/calendar/u/0/r/month",
+            "delay": "10m",
+            "varianceDelay": 0.4,
+            "Day": "Monday"
+        }
+    },
+
+
+
+    "Timed": {
+        "Radio": {
+            "URL": "https://tunein.com/user/frah221190",
+            "Month": "All",
+            "Week": "All",
+            "DayOfWeek": "All",
+            "Time": "20.00"
+        },
+
+        "Meditate": {
+            "URL": "https://app.www.calm.com/meditate",
+            "Month": "All",
+            "Week": "All",
+            "DayOfWeek": "All",
+            "Time": "19.00"
+        },
+
+        "Iron Man Workshop Radio": {
+            "URL": "https://www.youtube.com/watch?v=W2ff_TIgZGg",
+            "Month": "All",
+            "Week": "All",
+            "DayOfWeek": "All",
+            "Time": "11.00"
+        },
+        "EventBrite - Bari": {
+            "URL": "https://www.eventbrite.it/d/italy--bari/events/",
+            "Month": "All",
+            "Week": "All",
+            "DayOfWeek": "All",
+            "Time": "11.00"
+        },
+
+
+
+
+
+    }
+
+
+}

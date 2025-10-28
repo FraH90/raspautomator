@@ -1,0 +1,16 @@
+{
+    "bluetooth_devices": [
+        {
+            "name": "Carbonara Bedroom Speaker Logitech",
+            "mac_address": "EC:81:93:F8:23:2B"
+        },
+        {
+            "name": "Office Headphones",
+            "mac_address": "68:59:37:14:58:d7"
+        },
+        {
+            "name": "FreeBuds SE2 Corato",
+            "mac_address": "BC:7F:7B:76:E1:15"
+        }
+    ]
+}

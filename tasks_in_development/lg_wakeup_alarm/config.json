@@ -1,0 +1,9 @@
+{
+    "lgtv_ip": "192.168.1.100",
+    "lgtv_mac_address": "YOUR_TV_MAC_ADDRESS",
+    "channel_list": ["channel1", "channel2", "channel3"],
+    "bluetooth_address": "XX:XX:XX:XX:XX:XX",
+    "volume_steps": 5,
+    "max_vol": 50,
+    "time_on": 10
+}

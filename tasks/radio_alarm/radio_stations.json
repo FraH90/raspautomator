@@ -1,0 +1,242 @@
+[   
+    {
+        "name": "Time Dance FM",
+        "url": "https://eu8.fastcast4u.com/proxy/timedancefm?mp=/1",
+        "url_resolved": "https://eu8.fastcast4u.com/proxy/timedancefm?mp=/1",
+        "homepage": "https://www.timedancefm.it/"
+    },
+    {
+        "name": "m2o",
+        "url": "https://4c4b867c89244861ac216426883d1ad0.msvdn.net/radiom2o/radiom2o/master_ma.m3u8",
+        "url_resolved": "https://StreamCdnF26-4c4b867c89244861ac216426883d1ad0.msvdn.net/radiom2o/radiom2o/master_ma.m3u8",
+        "homepage": "https://www.m2o.it/"
+    },
+    {
+        "name": "Radio 105",
+        "url": "https://icecast.unitedradio.it/Radio105.mp3",
+        "url_resolved": "https://icecast.unitedradio.it/Radio105.mp3",
+        "homepage": "https://105.net/"
+    },
+    {
+        "name": "Radio Deejay",
+        "url": "https://4c4b867c89244861ac216426883d1ad0.msvdn.net/radiodeejay/radiodeejay/master_ma.m3u8",
+        "url_resolved": "https://StreamCdnF26-4c4b867c89244861ac216426883d1ad0.msvdn.net/radiodeejay/radiodeejay/master_ma.m3u8",
+        "homepage": "https://www.deejay.it/"
+    },
+    {
+        "name": "RTL 102.5",
+        "url": "https://dd782ed59e2a4e86aabf6fc508674b59.msvdn.net/live/S97044836/tbbP8T1ZRPBL/playlist_audio.m3u8",
+        "url_resolved": "https://StreamCdnF27-dd782ed59e2a4e86aabf6fc508674b59.msvdn.net/live/S97044836/tbbP8T1ZRPBL/playlist_audio.m3u8",
+        "homepage": "https://www.rtl.it/"
+    },
+    {
+        "name": "Radio Norba",
+        "url": "http://onair20.xdevel.com:8348/;",
+        "url_resolved": "https://stream9.xdevel.com/audio0s975885-461/stream/icecast.audio",
+        "homepage": "https://radionorba.it/"
+    },
+    {
+        "name": "Radio Norba Music",
+        "url": "http://onair15.xdevel.com:7086/;",
+        "url_resolved": "https://stream3.xdevel.com/audio1s975885-1082/stream/icecast.audio",
+        "homepage": "https://radionorba.it/"
+    },
+    {
+        "name": "90 Dance Radio",
+        "url": "https://nrf1.newradio.it:9934/stream",
+        "url_resolved": "https://nrf1.newradio.it:9934/stream",
+        "homepage": "https://www.90danceradio.com/"
+    },
+    {
+        "name": "DeeGay Pop & Dance",
+        "url": "https://stream.deegay.fm/deegay1.mp3",
+        "url_resolved": "https://stream.deegay.fm/deegay1.mp3",
+        "homepage": "https://www.deegay.fm/"
+    },
+    {
+        "name": "R101 '00",
+        "url": "http://icy.unitedradio.it/R1012000.aac",
+        "url_resolved": "http://icy.unitedradio.it/R1012000.aac",
+        "homepage": "http://www.r101.it/"
+    },
+    {
+        "name": "R101 '80",
+        "url": "http://icy.unitedradio.it/R10180.aac",
+        "url_resolved": "http://icy.unitedradio.it/R10180.aac",
+        "homepage": "http://www.r101.it/"
+    },
+    {
+        "name": "R101 '90",
+        "url": "http://icy.unitedradio.it/R10190.aac",
+        "url_resolved": "http://icy.unitedradio.it/R10190.aac",
+        "homepage": "http://www.r101.it/"
+    },
+    {
+        "name": "R101 Enjoy The Music",
+        "url": "http://icy.unitedradio.it/101Legend.aac",
+        "url_resolved": "http://icy.unitedradio.it/101Legend.aac",
+        "homepage": "http://www.r101.it/"
+    },
+    {
+        "name": "R101 FM",
+        "url": "http://icecast.unitedradio.it/r101",
+        "url_resolved": "http://icecast.unitedradio.it/r101",
+        "homepage": "http://www.r101.it/"
+    },
+    {
+        "name": "R101 ",
+        "url": "http://icy.unitedradio.it/R101_558.aac",
+        "url_resolved": "http://icy.unitedradio.it/R101_558.aac",
+        "homepage": "https://www.r101.it/"
+    },
+    {
+        "name": "105 Story",
+        "url": "https://icy.unitedradio.it/105Story.mp3?aw_0_req.userConsentV2=&listenerId=e01becbe77271731a6ab06043a29ef98",
+        "url_resolved": "https://icy.unitedradio.it/105Story.mp3?aw_0_req.userConsentV2=&listenerId=e01becbe77271731a6ab06043a29ef98",
+        "homepage": "https://www.105.net/sezioni/739/105-story"
+    },
+    {
+        "name": "Radio 105 - 2k & More",
+        "url": "http://icy.unitedradio.it/1052kandMore.mp3",
+        "url_resolved": "http://icy.unitedradio.it/1052kandMore.mp3",
+        "homepage": "http://www.105.net/"
+    },
+    {
+        "name": "Radio 105 - Dance 90",
+        "url": "http://icy.unitedradio.it/105Dance90.mp3",
+        "url_resolved": "http://icy.unitedradio.it/105Dance90.mp3",
+        "homepage": "http://www.105.net/sezioni/1281/105-dance-90"
+    },
+    {
+        "name": "Radio 105 - HipHop & RnB",
+        "url": "http://icy.unitedradio.it/105HipHopRnB.mp3",
+        "url_resolved": "http://icy.unitedradio.it/105HipHopRnB.mp3",
+        "homepage": "http://www.105.net/"
+    },
+    {
+        "name": "Radio 105 - Hits",
+        "url": "http://icy.unitedradio.it/105Hits.mp3",
+        "url_resolved": "http://icy.unitedradio.it/105Hits.mp3",
+        "homepage": "http://www.105.net/"
+    },
+    {
+        "name": "Radio 105 - InDaKlubb",
+        "url": "http://icy.unitedradio.it/105InDaKlubb.mp3",
+        "url_resolved": "http://icy.unitedradio.it/105InDaKlubb.mp3",
+        "homepage": "http://www.105.net/"
+    },
+    {
+        "name": "Radio 105 - Miami",
+        "url": "http://icy.unitedradio.it/105Miami.mp3",
+        "url_resolved": "http://icy.unitedradio.it/105Miami.mp3",
+        "homepage": "http://www.105.net/"
+    },
+    {
+        "name": "Radio 105 - Rap Italia",
+        "url": "http://icy.unitedradio.it/105RapItalia.mp3",
+        "url_resolved": "http://icy.unitedradio.it/105RapItalia.mp3",
+        "homepage": "http://www.105.net/"
+    },
+    {
+        "name": "Radio 105 - Story",
+        "url": "http://icy.unitedradio.it/105Story.mp3",
+        "url_resolved": "http://icy.unitedradio.it/105Story.mp3",
+        "homepage": "http://www.105.net/"
+    },
+    {
+        "name": "Radio 105 - Trap",
+        "url": "http://icecast.unitedradio.it/105Trap.mp3",
+        "url_resolved": "http://icecast.unitedradio.it/105Trap.mp3",
+        "homepage": "https://www.105.net/"
+    },
+    {
+        "name": "Virgin Radio Classic Rock",
+        "url": "http://icy.unitedradio.it/VirginRockClassics.mp3",
+        "url_resolved": "http://icy.unitedradio.it/VirginRockClassics.mp3",
+        "homepage": "http://www.virginradio.it/sezioni/1219/virgin-radio-rock-classic"
+    },
+    {
+        "name": "Virgin Radio Hard Rock",
+        "url": "http://icy.unitedradio.it/VirginHardRock.mp3",
+        "url_resolved": "http://icy.unitedradio.it/VirginHardRock.mp3",
+        "homepage": "http://www.virginradio.it/sezioni/1218/virgin-radio-hard-rock"
+    },
+    {
+        "name": "Virgin Radio Italia",
+        "url": "http://icecast.unitedradio.it/Virgin.mp3",
+        "url_resolved": "http://icecast.unitedradio.it/Virgin.mp3",
+        "homepage": "http://www.virginradio.it/"
+    },
+    {
+        "name": "Virgin Radio Rock '70",
+        "url": "http://icy.unitedradio.it/VirginRock70.mp3",
+        "url_resolved": "http://icy.unitedradio.it/VirginRock70.mp3",
+        "homepage": "http://www.virginradio.it/sezioni/1162/virgin-radio-rock-70"
+    },
+    {
+        "name": "Virgin Radio Rock '80",
+        "url": "http://icy.unitedradio.it/VirginRock80.mp3",
+        "url_resolved": "http://icy.unitedradio.it/VirginRock80.mp3",
+        "homepage": "http://www.virginradio.it/sezioni/1163/virgin-radio-rock-80"
+    },
+    {
+        "name": "Virgin Radio Rock '90",
+        "url": "http://icy.unitedradio.it/Virgin_03.mp3",
+        "url_resolved": "http://icy.unitedradio.it/Virgin_03.mp3",
+        "homepage": "https://www.virginradio.it/sezioni/1992/virgin-radio-rock-90"
+    },
+    {
+        "name": "Virgin Radio Rock 2K",
+        "url": "http://icy.unitedradio.it/Virgin_02.mp3",
+        "url_resolved": "http://icy.unitedradio.it/Virgin_02.mp3",
+        "homepage": "https://www.virginradio.it/sezioni/1986/virgin-radio-rock-2k"
+    },
+    {
+        "name": "Virgin Radio Rock Alternative",
+        "url": "http://icy.unitedradio.it/VirginRockAlternative.mp3",
+        "url_resolved": "http://icy.unitedradio.it/VirginRockAlternative.mp3",
+        "homepage": "http://www.virginradio.it/sezioni/1220/virgin-radio-rock-alternative"
+    },
+    {
+        "name": "Virgin Radio Rock Ballads",
+        "url": "http://icy.unitedradio.it/Virgin_06.mp3",
+        "url_resolved": "http://icy.unitedradio.it/Virgin_06.mp3",
+        "homepage": "https://www.virginradio.it/sezioni/2015/virgin-radio-rock-ballads"
+    },
+    {
+        "name": "Virgin Radio Rock Hits",
+        "url": "http://icy.unitedradio.it/VirginRockHits.mp3",
+        "url_resolved": "http://icy.unitedradio.it/VirginRockHits.mp3",
+        "homepage": "http://www.virginradio.it/sezioni/1239/virgin-radio-rock-hits"
+    },
+    {
+        "name": "Virgin Radio Rock Party",
+        "url": "http://icy.unitedradio.it/VirginRockParty.mp3",
+        "url_resolved": "http://icy.unitedradio.it/VirginRockParty.mp3",
+        "homepage": "http://www.virginradio.it/sezioni/1240/virgin-radio-rock-party"
+    },
+    {
+        "name": "Virgin Radio Rockstar: Guns N' Roses",
+        "url": "http://icy.unitedradio.it/um1029.mp3",
+        "url_resolved": "http://icy.unitedradio.it/um1029.mp3",
+        "homepage": "https://www.virginradio.it/sezioni/1824/music-star-guns-n-roses1824"
+    },
+    {
+        "name": "Virgin Radio Rockstar: Queen",
+        "url": "https://icy.unitedradio.it/Virgin_05.mp3",
+        "url_resolved": "https://icy.unitedradio.it/Virgin_05.mp3",
+        "homepage": "https://www.virginradio.it/sezioni/1981/music-star-queen"
+    },
+    {
+        "name": "Radio Gamma",
+        "url": "http://onair18.xdevel.com:8098/;stream.mp3",
+        "url_resolved": "https://stream5.xdevel.com/audio0s975943-762/stream/icecast.audio",
+        "homepage": "http://www.radio-gamma.it/"
+    },
+    {
+        "name": "Radio Gamma",
+        "url": "http://onair18.xdevel.com:8210/;stream.aac",
+        "url_resolved": "https://stream10.xdevel.com/audio0s977468-2028/stream/icecast.audio",
+        "homepage": "https://www.radiogamma.it/"
+    }
+]
