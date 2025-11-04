@@ -54,7 +54,7 @@ The included `installer.py` script automates the process of setting up RaspAutom
 1.  **Clone the Repository**
 
     ```bash
-    git clone <your-repository-url>
+    git clone https://github.com/FraH90/raspautomator
     cd raspautomator
     ```
 
