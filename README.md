@@ -9,6 +9,7 @@ The core of the automator uses a lightweight, cooperative multitasking approach 
 *   **Flexible Task Scheduling**: Configure tasks to run on specific days of the week and at specific times.
 *   **Continuous & Recurring Tasks**: Supports tasks that run once per scheduled time or repeat at a defined interval.
 *   **Dynamic Task Loading**: Automatically discovers and runs tasks placed in the `tasks` directory.
+*   **Task termination**: A task can be terminated by placing a .terminate file into the task directory, or a all.terminate file (where?)
 *   **Bluetooth Speaker Integration**: Built-in handler to connect to Bluetooth audio devices before running a task.
 *   **Service-based Installation**: Includes an installer to set up the automator as a `systemd` user service, ensuring it runs on boot and restarts automatically on failure.
 *   **Modular Design**: Each task is self-contained in its own directory, making it easy to add, remove, or modify tasks.
@@ -42,6 +43,9 @@ The included `installer.py` script automates the process of setting up RaspAutom
 1.  **Clone the Repository, install the scripts**
 
     ```bash
+    cd /Documents
+    mkdir myservices
+    cd /myservices
     git clone https://github.com/FraH90/raspautomator
     cd raspautomator
     
