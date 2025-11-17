@@ -1,4 +1,4 @@
 #!/bin/bash
 
 python3 installer.py
-sleep 100
+sleep 10
