@@ -17,65 +17,41 @@ The core of the automator uses a lightweight, cooperative multitasking approach 
 
 Before you begin, ensure your system (e.g., Raspberry Pi OS) has the following dependencies installed.
 
-### 1. System Packages
+### 1. Install required components
 
 These packages are required for audio playback, Bluetooth connectivity, and downloading media.
 
 ```bash
-# Update your package list
-sudo apt update
-
-# Install VLC, Bluetooth tools, and other utilities
+# Install VLC, Bluetooth tools, and other utilities (required for audio playback and Bluetooth connectivity)
 sudo apt install -y vlc bluez python3-pip
-```
 
-### 2. yt-dlp
+# Python packages
+sudo apt install python3-vlc python3-psutil
 
-This tool is used by the `sleep_sounds` task to download audio from YouTube. We recommend installing it via `pipx` for system-wide access without conflicts.
-
-```bash
+# yt-dlp (installed through pipx for system-wide access without conflicts)
 sudo apt install pipx
 pipx ensurepath
 pipx install yt-dlp
+
 ```
 
-### 3. Python Packages
-
-The project requires a few Python libraries. These can be installed using `pip`.
-
-```bash
-pip install python-vlc psutil pyRTOS
-```
-
-## Installation
+## 2. Installation
 
 The included `installer.py` script automates the process of setting up RaspAutomator to run as a background service.
 
-1.  **Clone the Repository**
+1.  **Clone the Repository, install the scripts**
 
     ```bash
     git clone https://github.com/FraH90/raspautomator
     cd raspautomator
+    
+    # Make scripts executable and run the installer
+    chmod +x installer.sh automator.sh
+    sudo installer.sh
     ```
 
-2.  **Make Scripts Executable**
-
-    Ensure the startup script is executable. The installer will prompt to do this, but you can also do it manually.
-
-    ```bash
-    chmod +x start.sh
-    ```
-
-3.  **Run the Installer**
-
-    Execute the installer script with `sudo` to grant it the necessary permissions to enable the system service to run at boot.
-
-    ```bash
-    sudo python3 installer.py
-    ```
-
-    The script will:
-    *   Locate the `start.sh` script.
+    The installation script will:
+    *   Locate the `automator.sh` script.
     *   Create a `systemd` user service file (`~/.config/systemd/user/automator.service`).
     *   Enable the service to start on boot (`loginctl enable-linger`).
     *   Reload, enable, and start the service.
