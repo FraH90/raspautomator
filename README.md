@@ -45,9 +45,9 @@ The included `installer.py` script automates the process of setting up RaspAutom
     git clone https://github.com/FraH90/raspautomator
     cd raspautomator
     
-    # Make scripts executable and run the installer
+    # Make scripts executable and run the installer (WITHOUT SUDO OR IT WILL THROW ERROR!)
     chmod +x installer.sh automator.sh
-    sudo installer.sh
+    ./installer.sh
     ```
 
     The installation script will:
