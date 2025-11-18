@@ -16,7 +16,7 @@ def setup():
 
 def thread_loop():
     # Task code here
-    print("Hello world")
+    print("Hello world, this is a test routine!")
 
 
 # Remember to not put any top-level executable code (that is, in this scope)

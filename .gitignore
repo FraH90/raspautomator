@@ -1,3 +1,7 @@
+# Project-specific ignores
+*.m4a
+output.out
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.pyc
