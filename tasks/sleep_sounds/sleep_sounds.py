@@ -103,26 +103,25 @@ class SleepSoundsPlayer:
                 self.logger.error("Could not download or locate audio file. Exiting.")
                 return False
 
-            # Loop that single file until stop_time
-            self.loop_until_stop(audio_path)
+            # Loop that single file indefinitely (duration controlled by orchestrator)
+            self.loop_indefinitely(audio_path)
         except Exception as e:
             self.logger.error(f"Error in start(): {e}")
             return False
 
-    def loop_until_stop(self, audio_path):
+    def loop_indefinitely(self, audio_path):
         """
-        Continuously loops a single audio file (using a MediaList in loop mode) until
-        the stop_time is reached.
+        Continuously loops a single audio file indefinitely.
+        Duration is controlled by orchestrator via max_duration.
         """
         self.is_playing = True
-        stop_dt = self.get_stop_datetime()
-        self.logger.info(f"Playing sleep sounds until {stop_dt.strftime('%Y-%m-%d %H:%M')}")
+        self.logger.info(f"Playing sleep sounds (duration controlled by orchestrator)")
 
         # Setup VLC with a MediaList containing only this single track
         vlc_instance = vlc.Instance('--network-caching=3000',
                                     '--file-caching=3000',
                                     '--live-caching=3000',
-                                    '--aout=pulse')  # or '--aout=alsa', etc.
+                                    '--aout=pulse')
 
         media_list = vlc_instance.media_list_new([audio_path])
         list_player = vlc_instance.media_list_player_new()
@@ -140,15 +139,15 @@ class SleepSoundsPlayer:
         self.logger.info(f"Now looping: {audio_path}")
 
         try:
-            # Poll until it's time to stop
-            while datetime.now() < stop_dt:
-                time.sleep(2)  # Check every couple seconds
+            # Loop indefinitely - orchestrator will stop after max_duration
+            while True:
+                time.sleep(2)
         finally:
             list_player.stop()
             list_player.release()
             vlc_instance.release()
             self.is_playing = False
-            self.logger.info("Reached stop time. Stopped playing.")
+            self.logger.info("Stopped playing sleep sounds.")
 
     def get_stop_datetime(self):
         """

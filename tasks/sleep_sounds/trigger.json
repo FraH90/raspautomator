@@ -3,6 +3,7 @@
     "timeout_on": false,
     "days_of_week": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Sunday"],
     "time_of_day": "23:30",
+    "max_duration": 12600,
     "timeout_interval": 3600,
     "description": "Configuration for task execution",
     "behavior_explanation": {
@@ -10,6 +11,7 @@
       "timeout_on": "If true, the task will repeat at the specified interval. If false, it will run only once per scheduled time.",
       "days_of_week": "List of days when the task should run (only used if schedule_on is true)",
       "time_of_day": "Time of day to run the task in 24-hour format (only used if schedule_on is true)",
+      "max_duration": "Maximum time in seconds the task should run before being stopped (optional, if not specified task runs until completion). For sleep_sounds: 12600s = 3.5 hours (23:30 to 03:00)",
       "timeout_interval": "Time in seconds between task executions (used if timeout_on is true)"
     },
     "execution_scenarios": [

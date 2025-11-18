@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 import json
 from .bluetooth_handler import BluetoothHandler  # Import it in Task class
 import logging
+import threading
 
 class Task:
     def __init__(self, task_file, debug=False):
@@ -70,13 +71,52 @@ class Task:
 
         return current_day in scheduled_days and current_hour == scheduled_time
 
+    def _execute_task_with_monitoring(self):
+        """
+        Execute the task in a thread and monitor for max_duration and .terminate files.
+        Returns when the task completes, max_duration is reached, or .terminate file is found.
+        """
+        # Start task in a separate thread
+        task_thread = threading.Thread(target=self.task_module.thread_loop, daemon=True)
+        task_thread.start()
+
+        # Get max_duration from config (optional parameter)
+        max_duration = self.config.get('max_duration', None)
+        start_time = datetime.now()
+
+        # Monitor the task execution
+        while task_thread.is_alive():
+            # Check for .terminate files
+            terminate_file = os.path.join(self.root_dir, f'{os.path.basename(self.task_name)}.terminate')
+            all_terminate_file = os.path.join(self.root_dir, 'all.terminate')
+
+            if os.path.exists(terminate_file) or os.path.exists(all_terminate_file):
+                logger = logging.getLogger(__name__)
+                logger.info(f"Terminate signal received for task {os.path.basename(self.task_name)}")
+                # Task will stop on its own since we're using daemon threads
+                return True  # Signal termination
+
+            # Check max_duration if specified
+            if max_duration and (datetime.now() - start_time).total_seconds() > max_duration:
+                logger = logging.getLogger(__name__)
+                logger.info(f"Task {os.path.basename(self.task_name)} reached max_duration of {max_duration}s")
+                # Task will stop on its own since we're using daemon threads
+                return False  # Normal completion
+
+            # Brief sleep to avoid busy-waiting
+            yield [pyRTOS.timeout(1)]
+
+        # Task completed naturally
+        return False
+
     def run(self, self_task):
         # If in debug mode, run immediately and continuously
         if self.debug:
             while True:
-                self.task_module.thread_loop()
+                # Execute task with monitoring in debug mode
+                yield from self._execute_task_with_monitoring()
                 yield [pyRTOS.timeout(1)]  # Small delay to prevent CPU hogging
-            
+
         # Normal scheduling logic for non-debug mode
         next_run = self.calculate_next_run()
         yield
@@ -95,8 +135,11 @@ class Task:
                     sleep_time = (next_run - now).total_seconds()
                     yield [pyRTOS.timeout(sleep_time)]
                     continue
-                # Execute the main thread of the task, with the appropriate timeout
-                self.task_module.thread_loop()
+                # Execute the main thread of the task with monitoring
+                terminated = yield from self._execute_task_with_monitoring()
+                if terminated:
+                    return  # Exit if .terminate file was found
+
                 if self.config['timeout_on']:
                     # Set next_run to be timeout_interval from now
                     next_run = now + timedelta(seconds=self.config['timeout_interval'])
@@ -105,15 +148,11 @@ class Task:
                     next_run = self.calculate_next_run()
             else:
                 # If schedule is off and timeout is on, always execute
-                self.task_module.thread_loop()
-            
+                terminated = yield from self._execute_task_with_monitoring()
+                if terminated:
+                    return  # Exit if .terminate file was found
+
             if self.config['timeout_on']:
                 yield [pyRTOS.timeout(self.config['timeout_interval'])]
             else:
                 yield
-            # If the "all.terminate" file exists in the root folder, terminate the task
-            # This should be true even if the $name_task.terminate file is found in the root folder
-            # where $name_task is the name of the folder containing the task.py file
-            if os.path.exists(os.path.join(self.root_dir, 'all.terminate')) or \
-               os.path.exists(os.path.join(self.root_dir, f'{self.task_name}.terminate')):
-                return

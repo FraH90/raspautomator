@@ -49,14 +49,15 @@ class RadioPlayer:
         with open(RADIO_STREAM_FILE, 'r') as f:
             return json.load(f)
 
-    def play_radio_for_one_hour(self, stream_url, radio_name):
+    def play_radio(self, stream_url, radio_name):
+        """Play radio stream indefinitely. Duration is controlled by orchestrator via max_duration."""
         if self.is_playing:
             print("Radio is already playing. Skipping new play request.")
             return
 
         self.is_playing = True  # Set the flag to True when starting to play
         try:
-            # Increase VLC buffer and set audio output to ALSA
+            # Increase VLC buffer and set audio output to PulseAudio/PipeWire
             instance = vlc.Instance('--network-caching=3000', '--file-caching=3000', '--live-caching=3000', '--aout=pulse')
             player = instance.media_player_new()
             media = instance.media_new(stream_url)
@@ -65,12 +66,12 @@ class RadioPlayer:
             player.play()
 
             print(f"{time.strftime('%H:%M')} - Playing radio {radio_name}")
-            # Play for 1 hour (3600 seconds)
-            time.sleep(3600)
-            # Stop the player
-            player.stop()
-            print(f"{time.strftime('%H:%M')} - Stopped playing radio {radio_name}")
+
+            # Play indefinitely - the orchestrator will stop this task after max_duration
+            while True:
+                time.sleep(1)
         finally:
+            print(f"{time.strftime('%H:%M')} - Stopping radio {radio_name}")
             player.stop()
             player.release()
             instance.release()
@@ -90,7 +91,7 @@ class RadioPlayer:
             # Try to connect
             if bluetooth_handler.connect():
                 self.logger.info(f"Connected to Bluetooth device: {self.bluetooth_mac}")
-                self.play_radio_for_one_hour(radio_stream_url, radio_name)
+                self.play_radio(radio_stream_url, radio_name)
             else:
                 self.logger.error("Failed to connect to Bluetooth speaker. Exiting.")
                 return False
