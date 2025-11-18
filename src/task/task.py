@@ -12,7 +12,8 @@ class Task:
         # Initialize the task by setting the task name and importing the task module
         self.task_name = os.path.dirname(task_file)
         self.task_module = self.import_task_module(task_file)
-        self.root_dir = os.path.dirname(os.path.dirname(task_file))
+        # Root dir should be 3 levels up: from tasks/radio_alarm/radio_alarm.py to project root
+        self.root_dir = os.path.dirname(os.path.dirname(os.path.dirname(task_file)))
         self.config = self.load_trigger_config()
         self.debug = debug  # Store debug mode
         
