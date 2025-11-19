@@ -9,7 +9,7 @@ The core of the automator uses a lightweight, cooperative multitasking approach 
 *   **Flexible Task Scheduling**: Configure tasks to run on specific days of the week and at specific times.
 *   **Continuous & Recurring Tasks**: Supports tasks that run once per scheduled time or repeat at a defined interval.
 *   **Dynamic Task Loading**: Automatically discovers and runs tasks placed in the `tasks` directory.
-*   **Task termination**: A task can be terminated by placing a .terminate file into the task directory, or a all.terminate file (where?)
+*   **Task Termination**: Tasks can be stopped immediately by creating `.terminate` files in the `tasks/` directory (e.g., `touch tasks/radio_alarm.terminate` or `touch tasks/all.terminate` to stop all tasks)
 *   **Bluetooth Speaker Integration**: Built-in handler to connect to Bluetooth audio devices before running a task.
 *   **Service-based Installation**: Includes an installer to set up the automator as a `systemd` user service, ensuring it runs on boot and restarts automatically on failure.
 *   **Modular Design**: Each task is self-contained in its own directory, making it easy to add, remove, or modify tasks.

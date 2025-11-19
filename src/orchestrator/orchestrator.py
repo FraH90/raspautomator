@@ -24,8 +24,8 @@ class Orchestrator:
         return task_files
     
     def run(self):
-        # Delete all the .terminate files in this folder (otherwise tasks won't start)
-        terminate_list = glob.glob("*.terminate")
+        # Delete all the .terminate files in the tasks folder (otherwise tasks won't restart)
+        terminate_list = glob.glob(os.path.join(self.tasks_root_folder, "*.terminate"))
         for terminate_item in terminate_list:
             os.remove(terminate_item)
         # Create a robust wrapper for each task, then add to pyRTOS

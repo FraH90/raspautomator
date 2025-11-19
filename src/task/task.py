@@ -101,9 +101,10 @@ class Task:
         start_time = datetime.now()
         logger.info(f"MONITORING: max_duration={max_duration} seconds")
 
-        # Build terminate file paths
-        terminate_file = os.path.join(self.root_dir, f'{os.path.basename(self.task_name)}.terminate')
-        all_terminate_file = os.path.join(self.root_dir, 'all.terminate')
+        # Build terminate file paths in the tasks folder
+        tasks_dir = os.path.join(self.root_dir, 'tasks')
+        terminate_file = os.path.join(tasks_dir, f'{os.path.basename(self.task_name)}.terminate')
+        all_terminate_file = os.path.join(tasks_dir, 'all.terminate')
 
         logger.info(f"MONITORING: Will check for: {terminate_file}")
         logger.info(f"MONITORING: Will check for: {all_terminate_file}")
