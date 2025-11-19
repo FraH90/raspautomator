@@ -49,8 +49,16 @@ class RadioPlayer:
         with open(RADIO_STREAM_FILE, 'r') as f:
             return json.load(f)
 
-    def play_radio(self, stream_url, radio_name):
-        """Play radio stream indefinitely. Duration is controlled by orchestrator via max_duration."""
+    def play_radio(self, stream_url, radio_name, stop_event):
+        """
+        Play radio stream until stop_event is set.
+        Duration is controlled by orchestrator via max_duration or .terminate files.
+
+        Args:
+            stream_url: URL of the radio stream
+            radio_name: Name of the radio station
+            stop_event: threading.Event() that signals when to stop playing
+        """
         if self.is_playing:
             print("Radio is already playing. Skipping new play request.")
             return
@@ -67,9 +75,11 @@ class RadioPlayer:
 
             print(f"{time.strftime('%H:%M')} - Playing radio {radio_name}")
 
-            # Play indefinitely - the orchestrator will stop this task after max_duration
-            while True:
+            # Play until stop_event is set by the orchestrator
+            while not stop_event.is_set():
                 time.sleep(1)
+
+            print(f"{time.strftime('%H:%M')} - Stop event received, stopping radio {radio_name}")
         finally:
             print(f"{time.strftime('%H:%M')} - Stopping radio {radio_name}")
             player.stop()
@@ -77,25 +87,30 @@ class RadioPlayer:
             instance.release()
             self.is_playing = False  # Reset the flag when done playing
 
-    def start(self):
-        """Initialize and start radio playback"""
+    def start(self, stop_event):
+        """
+        Initialize and start radio playback.
+
+        Args:
+            stop_event: threading.Event() that signals when to stop
+        """
         try:
             # Select random radio stream
             radio_stream = random.choice(self.radio_streams)
             radio_stream_url = radio_stream['url']
             radio_name = radio_stream['name']
-            
+
             # Initialize Bluetooth connection with single MAC address
             bluetooth_handler = BluetoothHandler(self.bluetooth_mac)
-            
+
             # Try to connect
             if bluetooth_handler.connect():
                 self.logger.info(f"Connected to Bluetooth device: {self.bluetooth_mac}")
-                self.play_radio(radio_stream_url, radio_name)
+                self.play_radio(radio_stream_url, radio_name, stop_event)
             else:
                 self.logger.error("Failed to connect to Bluetooth speaker. Exiting.")
                 return False
-                
+
         except Exception as e:
             self.logger.error(f"Error in start(): {str(e)}")
             return False
@@ -145,17 +160,29 @@ def delete_pid_file():
         os.remove(pid_file)
 
 # Entry point of the program
-def main():
+def main(stop_event=None):
+    """
+    Main entry point for radio alarm.
+
+    Args:
+        stop_event: Optional threading.Event() for graceful shutdown.
+                   If None, creates a dummy event that never gets set (for standalone mode).
+    """
+    # Create a dummy event that never gets set if running standalone
+    if stop_event is None:
+        stop_event = threading.Event()
+
     check_if_already_running()
     try:
         radio_player = RadioPlayer()
-        radio_player.start()
+        radio_player.start(stop_event)
     finally:
         delete_pid_file()
 
 # This is if we want to run the script as a task
-def thread_loop():
-    main()
+def thread_loop(stop_event):
+    """Entry point when running as a scheduled task"""
+    main(stop_event)
 
 # This is if we want to run the script as a standalone program
 if __name__ == "__main__":

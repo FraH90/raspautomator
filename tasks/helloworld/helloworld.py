@@ -14,8 +14,13 @@ def setup():
     return timeout, schedule
 
 
-def thread_loop():
-    # Task code here
+def thread_loop(stop_event):
+    """
+    Task code here.
+
+    Args:
+        stop_event: threading.Event() that signals when to stop
+    """
     print("Hello world, this is a test routine!")
 
 

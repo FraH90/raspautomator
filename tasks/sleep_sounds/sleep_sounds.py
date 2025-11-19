@@ -74,11 +74,14 @@ class SleepSoundsPlayer:
             self.logger.error(f"Error loading config/sources: {e}")
             raise
 
-    def start(self):
+    def start(self, stop_event):
         """
         1) Connect to Bluetooth
         2) Pick 1 random track from youtube_urls
-        3) Download if needed, then loop until stop_time
+        3) Download if needed, then loop until stop_event is set
+
+        Args:
+            stop_event: threading.Event() that signals when to stop
         """
         try:
             if self.is_playing:
@@ -90,7 +93,7 @@ class SleepSoundsPlayer:
             if not bt_handler.connect():
                 self.logger.error("Failed to connect to Bluetooth speaker. Exiting.")
                 return False
-            
+
             self.logger.info(f"Connected to Bluetooth device: {self.bluetooth_mac}")
 
             # Pick a single random track from the list
@@ -103,16 +106,20 @@ class SleepSoundsPlayer:
                 self.logger.error("Could not download or locate audio file. Exiting.")
                 return False
 
-            # Loop that single file indefinitely (duration controlled by orchestrator)
-            self.loop_indefinitely(audio_path)
+            # Loop that single file until stop_event is set (duration controlled by orchestrator)
+            self.loop_indefinitely(audio_path, stop_event)
         except Exception as e:
             self.logger.error(f"Error in start(): {e}")
             return False
 
-    def loop_indefinitely(self, audio_path):
+    def loop_indefinitely(self, audio_path, stop_event):
         """
-        Continuously loops a single audio file indefinitely.
-        Duration is controlled by orchestrator via max_duration.
+        Continuously loops a single audio file until stop_event is set.
+        Duration is controlled by orchestrator via max_duration or .terminate files.
+
+        Args:
+            audio_path: Path to the audio file to loop
+            stop_event: threading.Event() that signals when to stop
         """
         self.is_playing = True
         self.logger.info(f"Playing sleep sounds (duration controlled by orchestrator)")
@@ -139,9 +146,10 @@ class SleepSoundsPlayer:
         self.logger.info(f"Now looping: {audio_path}")
 
         try:
-            # Loop indefinitely - orchestrator will stop after max_duration
-            while True:
+            # Loop until stop_event is set by the orchestrator
+            while not stop_event.is_set():
                 time.sleep(2)
+            self.logger.info("Stop event received, stopping sleep sounds")
         finally:
             list_player.stop()
             list_player.release()
@@ -279,20 +287,33 @@ def delete_pid_file():
     if os.path.isfile(PID_FILE):
         os.remove(PID_FILE)
 
-def main():
+def main(stop_event=None):
+    """
+    Main entry point for sleep sounds player.
+
+    Args:
+        stop_event: Optional threading.Event() for graceful shutdown.
+                   If None, creates a dummy event that never gets set (for standalone mode).
+    """
+    # Create a dummy event that never gets set if running standalone
+    if stop_event is None:
+        stop_event = threading.Event()
+
     check_if_already_running()
     try:
         player = SleepSoundsPlayer()
-        player.start()
+        player.start(stop_event)
     finally:
         delete_pid_file()
 
-def thread_loop():
+def thread_loop(stop_event):
     """
-    If you run this script from your automator as a "task" in a separate thread,
-    call thread_loop() (similar to your radio script).
+    Entry point when running as a scheduled task.
+
+    Args:
+        stop_event: threading.Event() that signals when to stop
     """
-    main()
+    main(stop_event)
 
 if __name__ == "__main__":
     main()

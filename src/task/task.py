@@ -16,9 +16,12 @@ class Task:
         self.root_dir = os.path.dirname(os.path.dirname(os.path.dirname(task_file)))
         self.config = self.load_trigger_config()
         self.debug = debug  # Store debug mode
-        
+
         # Initialize BluetoothHandler as a class property
         self.bluetooth = None
+
+        # Create a stop event that tasks can check to know when to terminate
+        self.stop_event = threading.Event()
 
     def setup_bluetooth(self, mac_address):
         """Initialize bluetooth handler with given MAC address"""
@@ -77,37 +80,106 @@ class Task:
         Execute the task in a thread and monitor for max_duration and .terminate files.
         Returns when the task completes, max_duration is reached, or .terminate file is found.
         """
-        # Start task in a separate thread
-        task_thread = threading.Thread(target=self.task_module.thread_loop, daemon=True)
+        logger = logging.getLogger(__name__)
+
+        # Log initial information
+        logger.info("=" * 80)
+        logger.info(f"MONITORING: Starting task {os.path.basename(self.task_name)}")
+        logger.info(f"MONITORING: Task module file: {self.task_module.__file__}")
+        logger.info(f"MONITORING: Task name (dirname): {self.task_name}")
+        logger.info(f"MONITORING: Task basename: {os.path.basename(self.task_name)}")
+        logger.info(f"MONITORING: Root dir: {self.root_dir}")
+
+        # Clear the stop event for this execution
+        self.stop_event.clear()
+
+        # Start task in a separate thread, passing the stop_event
+        task_thread = threading.Thread(
+            target=self.task_module.thread_loop,
+            args=(self.stop_event,),
+            daemon=True
+        )
         task_thread.start()
+        logger.info(f"MONITORING: Task thread started (daemon={task_thread.daemon})")
 
         # Get max_duration from config (optional parameter)
         max_duration = self.config.get('max_duration', None)
         start_time = datetime.now()
+        logger.info(f"MONITORING: max_duration={max_duration} seconds")
+
+        # Build terminate file paths
+        terminate_file = os.path.join(self.root_dir, f'{os.path.basename(self.task_name)}.terminate')
+        all_terminate_file = os.path.join(self.root_dir, 'all.terminate')
+
+        logger.info(f"MONITORING: Will check for: {terminate_file}")
+        logger.info(f"MONITORING: Will check for: {all_terminate_file}")
+        logger.info("=" * 80)
+
+        iteration = 0
 
         # Monitor the task execution
         while task_thread.is_alive():
-            # Check for .terminate files
-            terminate_file = os.path.join(self.root_dir, f'{os.path.basename(self.task_name)}.terminate')
-            all_terminate_file = os.path.join(self.root_dir, 'all.terminate')
+            iteration += 1
 
-            if os.path.exists(terminate_file) or os.path.exists(all_terminate_file):
-                logger = logging.getLogger(__name__)
-                logger.info(f"Terminate signal received for task {os.path.basename(self.task_name)}")
-                # Task will stop on its own since we're using daemon threads
+            # Log every 5 seconds to avoid spam
+            if iteration % 5 == 0:
+                elapsed = (datetime.now() - start_time).total_seconds()
+                logger.info(f"MONITORING: Still running... ({iteration}s elapsed, thread alive={task_thread.is_alive()})")
+
+            # Check for .terminate files
+            terminate_exists = os.path.exists(terminate_file)
+            all_terminate_exists = os.path.exists(all_terminate_file)
+
+            if terminate_exists or all_terminate_exists:
+                logger.info("=" * 80)
+                logger.info(f"MONITORING: TERMINATE FILE DETECTED!")
+                logger.info(f"MONITORING: terminate_file exists: {terminate_exists}")
+                logger.info(f"MONITORING: all_terminate_file exists: {all_terminate_exists}")
+                logger.info(f"MONITORING: Setting stop_event to signal task thread...")
+
+                # Signal the task to stop
+                self.stop_event.set()
+
+                # Wait for the task thread to stop gracefully (max 5 seconds)
+                logger.info(f"MONITORING: Waiting for task thread to stop gracefully...")
+                task_thread.join(timeout=5)
+
+                if task_thread.is_alive():
+                    logger.warning(f"MONITORING: Task thread did not stop after 5 seconds")
+                else:
+                    logger.info(f"MONITORING: Task thread stopped successfully!")
+
+                logger.info("=" * 80)
                 return True  # Signal termination
 
             # Check max_duration if specified
             if max_duration and (datetime.now() - start_time).total_seconds() > max_duration:
-                logger = logging.getLogger(__name__)
-                logger.info(f"Task {os.path.basename(self.task_name)} reached max_duration of {max_duration}s")
-                # Task will stop on its own since we're using daemon threads
+                elapsed = (datetime.now() - start_time).total_seconds()
+                logger.info("=" * 80)
+                logger.info(f"MONITORING: MAX_DURATION REACHED!")
+                logger.info(f"MONITORING: Elapsed: {elapsed}s, max_duration: {max_duration}s")
+                logger.info(f"MONITORING: Setting stop_event to signal task thread...")
+
+                # Signal the task to stop
+                self.stop_event.set()
+
+                # Wait for the task thread to stop gracefully (max 5 seconds)
+                logger.info(f"MONITORING: Waiting for task thread to stop gracefully...")
+                task_thread.join(timeout=5)
+
+                if task_thread.is_alive():
+                    logger.warning(f"MONITORING: Task thread did not stop after 5 seconds")
+                else:
+                    logger.info(f"MONITORING: Task thread stopped successfully!")
+
+                logger.info("=" * 80)
                 return False  # Normal completion
 
             # Brief sleep to avoid busy-waiting
             yield [pyRTOS.timeout(1)]
 
         # Task completed naturally
+        logger.info(f"MONITORING: Task thread died naturally")
         return False
 
     def run(self, self_task):

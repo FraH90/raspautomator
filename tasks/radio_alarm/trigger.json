@@ -2,8 +2,8 @@
     "schedule_on": true,
     "timeout_on": false,
     "days_of_week": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-    "time_of_day": "11:00",
-    "max_duration": 3600,
+    "time_of_day": "13:12",
+    "max_duration": 300,
     "timeout_interval": 3600,
     "description": "Configuration for task execution",
     "behavior_explanation": {

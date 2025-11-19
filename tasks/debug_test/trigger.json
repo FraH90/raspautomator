@@ -1,0 +1,9 @@
+{
+    "max_duration": 30,
+    "schedule_on": false,
+    "timeout_on": false,
+    "days_of_week": [],
+    "time_of_day": "00:00",
+    "timeout_interval": 1,
+    "description": "Debug task to test .terminate file detection"
+}
