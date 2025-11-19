@@ -121,9 +121,8 @@ class TaskConfigTab(QWidget):
 
         # Buttons
         button_layout = QHBoxLayout()
-        button_layout.addStretch()
 
-        # Terminate button
+        # Terminate button (extreme left)
         self.terminate_button = QPushButton("🛑 Terminate Task")
         self.terminate_button.setStyleSheet("""
             QPushButton {
@@ -145,7 +144,10 @@ class TaskConfigTab(QWidget):
         self.terminate_button.clicked.connect(self.terminate_task)
         button_layout.addWidget(self.terminate_button)
 
-        # Save button
+        # Stretch space in the middle
+        button_layout.addStretch()
+
+        # Save button (extreme right)
         self.save_button = QPushButton("💾 Save Configuration")
         self.save_button.setStyleSheet("""
             QPushButton {
