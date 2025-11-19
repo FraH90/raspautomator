@@ -4,13 +4,14 @@ import pyRTOS
 from datetime import datetime, timedelta
 import json
 from .bluetooth_handler import BluetoothHandler  # Import it in Task class
+from config_watcher import TaskRegistry
 import logging
 import threading
 
 class Task:
     def __init__(self, task_file, debug=False):
         # Initialize the task by setting the task name and importing the task module
-        self.task_name = os.path.dirname(task_file)
+        self.task_name = os.path.basename(os.path.dirname(task_file))
         self.task_module = self.import_task_module(task_file)
         # Root dir should be 3 levels up: from tasks/radio_alarm/radio_alarm.py to project root
         self.root_dir = os.path.dirname(os.path.dirname(os.path.dirname(task_file)))
@@ -22,6 +23,9 @@ class Task:
 
         # Create a stop event that tasks can check to know when to terminate
         self.stop_event = threading.Event()
+
+        # Register this task instance with the TaskRegistry for config updates
+        TaskRegistry.register(self.task_name, self)
 
     def setup_bluetooth(self, mac_address):
         """Initialize bluetooth handler with given MAC address"""

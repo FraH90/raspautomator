@@ -1,0 +1,19 @@
+# RaspAutomator Dependencies
+
+# Core framework
+pyRTOS==0.2.1
+
+# Audio playback
+python-vlc>=3.0.0
+
+# System utilities
+psutil>=5.9.0
+
+# File system monitoring for config auto-reload
+watchdog>=3.0.0
+
+# GUI dependencies
+PyQt6>=6.6.0
+
+# YouTube and web content (for sleep_sounds task)
+yt-dlp>=2023.0.0

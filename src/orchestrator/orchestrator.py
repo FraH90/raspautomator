@@ -4,6 +4,7 @@ import pyRTOS
 import time
 import logging
 from task import Task
+from config_watcher import ConfigWatcher
 
 logger = logging.getLogger(__name__)
 
@@ -12,6 +13,7 @@ class Orchestrator:
     def __init__(self, tasks_root_folder):
         self.tasks_root_folder = tasks_root_folder
         self.task_files = self.discover_task_files()
+        self.config_watcher = None
 
     # Get a list of all task scripts in the current directory and subdirectories
     def discover_task_files(self):
@@ -28,13 +30,24 @@ class Orchestrator:
         terminate_list = glob.glob(os.path.join(self.tasks_root_folder, "*.terminate"))
         for terminate_item in terminate_list:
             os.remove(terminate_item)
+
+        # Start the config watcher to monitor trigger.json files
+        self.config_watcher = ConfigWatcher(self.tasks_root_folder)
+        self.config_watcher.start()
+
         # Create a robust wrapper for each task, then add to pyRTOS
         for task_file in self.task_files:
             pyRTOS.add_task(self._create_robust_pyRTOS_task(task_file))
         # Add a service routine to slow down the execution
         pyRTOS.add_service_routine(lambda: time.sleep(0.1))
-        # Start pyRTOS
-        pyRTOS.start()
+
+        try:
+            # Start pyRTOS
+            pyRTOS.start()
+        finally:
+            # Stop the config watcher when pyRTOS exits
+            if self.config_watcher:
+                self.config_watcher.stop()
 
     def run_task_debug(self, task_name):
         """Run a specific task in debug mode"""

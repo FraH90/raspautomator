@@ -1,5 +1,5 @@
 {
-    "max_duration": 30,
+    "max_duration": 60,
     "schedule_on": false,
     "timeout_on": false,
     "days_of_week": [],
