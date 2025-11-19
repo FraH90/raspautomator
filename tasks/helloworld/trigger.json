@@ -3,31 +3,5 @@
     "timeout_on": false,
     "days_of_week": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
     "time_of_day": "13:14",
-    "timeout_interval": 1,
-    "description": "Configuration for task execution",
-    "behavior_explanation": {
-      "schedule_on": "If true, the task will run only at specified times. If false, it will run continuously.",
-      "timeout_on": "If true, the task will repeat at the specified interval. If false, it will run only once per scheduled time.",
-      "days_of_week": "List of days when the task should run (only used if schedule_on is true)",
-      "time_of_day": "Time of day to run the task in 24-hour format (only used if schedule_on is true)",
-      "timeout_interval": "Time in seconds between task executions (used if timeout_on is true)"
-    },
-    "execution_scenarios": [
-      {
-        "scenario": "schedule_on: true, timeout_on: true",
-        "behavior": "Task runs at specified days and time, then repeats at timeout_interval"
-      },
-      {
-        "scenario": "schedule_on: true, timeout_on: false",
-        "behavior": "Task runs once at specified days and time, then waits until next scheduled time"
-      },
-      {
-        "scenario": "schedule_on: false, timeout_on: true",
-        "behavior": "Task runs continuously, waiting for timeout_interval between executions"
-      },
-      {
-        "scenario": "schedule_on: false, timeout_on: false",
-        "behavior": "Task runs continuously without any delay between executions"
-      }
-    ]
-  }
+    "timeout_interval": 1
+}

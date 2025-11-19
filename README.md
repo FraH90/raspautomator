@@ -80,11 +80,36 @@ Each task is configured through JSON files within its directory (`tasks/<task_na
 
 This file controls when and how a task runs.
 
+**Available Parameters:**
 *   `schedule_on`: If `true`, the task runs on the schedule defined by `days_of_week` and `time_of_day`. If `false`, it runs continuously (respecting `timeout_on`).
 *   `timeout_on`: If `true`, the task repeats every `timeout_interval` seconds after its first run. If `false`, it runs only once per scheduled time.
-*   `days_of_week`: A list of days to run the task (e.g., `"Monday"`, `"Tuesday"`).
-*   `time_of_day`: The time to run the task in `HH:MM` format.
-*   `timeout_interval`: The delay in seconds between repeated executions.
+*   `days_of_week`: A list of days to run the task (e.g., `"Monday"`, `"Tuesday"`). Only used when `schedule_on` is `true`.
+*   `time_of_day`: The time to run the task in `HH:MM` format (24-hour). Only used when `schedule_on` is `true`.
+*   `timeout_interval`: The delay in seconds between repeated executions. Used when `timeout_on` is `true`.
+*   `max_duration`: Maximum time in seconds the task should run before being automatically stopped (optional).
+
+**Execution Scenarios:**
+
+Different combinations of `schedule_on` and `timeout_on` control how your task behaves:
+
+| schedule_on | timeout_on | Behavior |
+|-------------|------------|----------|
+| `true` | `true` | Task runs at specified days and time, then repeats every `timeout_interval` seconds |
+| `true` | `false` | Task runs once at specified days and time, then waits until next scheduled time |
+| `false` | `true` | Task runs continuously, waiting `timeout_interval` seconds between executions |
+| `false` | `false` | Task runs continuously without any delay between executions |
+
+**Example:**
+```json
+{
+    "schedule_on": true,
+    "timeout_on": false,
+    "days_of_week": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
+    "time_of_day": "08:00",
+    "max_duration": 3600,
+    "timeout_interval": 3600
+}
+```
 
 ### Task-Specific Settings (`config.json`)
 
