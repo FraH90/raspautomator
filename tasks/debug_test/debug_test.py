@@ -4,16 +4,6 @@ import os
 
 logger = logging.getLogger(__name__)
 
-def setup():
-    """Setup function required by the framework"""
-    timeout = 1
-    schedule = {
-        "enabled": False,
-        "days_of_week": [],
-        "time_of_day": "00:00"
-    }
-    return timeout, schedule
-
 
 def thread_loop(stop_event):
     """

@@ -1,7 +1,7 @@
 {
     "schedule_on": true,
-    "timeout_on": false,
+    "timeout_on": true,
     "days_of_week": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-    "time_of_day": "13:14",
+    "time_of_day": "14:24",
     "timeout_interval": 1
 }

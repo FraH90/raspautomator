@@ -40,12 +40,6 @@ class Task:
         config_path = os.path.join(os.path.dirname(self.task_module.__file__), 'trigger.json')
         with open(config_path, 'r') as f:
             return json.load(f)
-        
-    def setup(self):
-        # Execute the setup function of the task module to initialize the task
-        # The timeout of each specific task and the schedule are returned by the setup function
-        self.task_timeout, self.schedule = self.task_module.setup()
-        self.next_run = self.next_run_time(self.schedule)
 
     def calculate_next_run(self):
         if not self.config['schedule_on']:

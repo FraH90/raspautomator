@@ -1,20 +1,10 @@
-def setup():
-    # Initialization code here
-    
-    # Specify task timeout
-    timeout = 15
+def thread_loop(stop_event):
+    """
+    Simple example task.
 
-    # Schedule configuration for periodic execution
-    schedule = {
-        "enabled": True,  # Set to True for scheduled execution
-        "days_of_week": ["Monday", "Wednesday", "Friday"],  # Days to run the task
-        "time_of_day": "12:44"  # Time to run the task (24-hour format)
-    }
-
-    return timeout, schedule
-
-
-def thread_loop():
+    Args:
+        stop_event: threading.Event() that signals when to stop
+    """
     # Task code here
     print("Hello man")
 
