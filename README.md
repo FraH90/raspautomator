@@ -20,14 +20,16 @@ Before you begin, ensure your system (e.g., Raspberry Pi OS) has the following d
 
 ### 1. Install required components
 
-These packages are required for audio playback, Bluetooth connectivity, and downloading media.
+These packages are required for audio playback, Bluetooth connectivity, GUI, and downloading media.
+
+**Note on Raspberry Pi OS Package Management**: Raspberry Pi OS uses an externally-managed Python environment (PEP 668) to prevent conflicts between system packages and pip-installed packages. Therefore, Python libraries should be installed using `apt` with the `python3-` prefix rather than `pip`, which ensures compatibility with system tools and prevents breaking your Python installation.
 
 ```bash
 # Install VLC, Bluetooth tools, and other utilities (required for audio playback and Bluetooth connectivity)
 sudo apt install -y vlc bluez python3-pip
 
-# Python packages
-sudo apt install python3-vlc python3-psutil
+# Python packages (installed via apt to respect externally-managed environment)
+sudo apt install python3-vlc python3-psutil python3-watchdog python3-pyqt6
 
 # yt-dlp (installed through pipx for system-wide access without conflicts)
 sudo apt install pipx
@@ -35,6 +37,8 @@ pipx ensurepath
 pipx install yt-dlp
 
 ```
+
+**Note**: pyRTOS is not available in apt repositories or pip. You must install it manually from the GitHub repository or use a separate installation script.
 
 ## 2. Installation
 
@@ -150,3 +154,29 @@ This task connects to a Bluetooth speaker, picks a random YouTube video from a l
 3.  Create a Python script that contains the core logic. It must have a `thread_loop()` function, which will be called by the scheduler.
 4.  If your task requires specific configuration (like API keys or MAC addresses), create a `config.json` file.
 5.  The automator will automatically detect and run your new task on the next restart.
+
+## Automatic Configuration Reload
+
+RaspAutomator includes a file system watcher that monitors `trigger.json` files for changes. This means you can modify task configurations without restarting the automator service.
+
+### How It Works
+
+*   **File Monitoring**: The system uses the `watchdog` library to detect when any `trigger.json` file is modified in the `tasks/` directory.
+*   **Automatic Reload**: When a change is detected, the configuration is automatically reloaded into memory.
+*   **Safe Updates**: Currently running tasks complete with their original configuration. The updated configuration applies to the next task execution.
+*   **No Service Restart Required**: Make changes through the GUI or by editing JSON files directly - the automator picks them up automatically.
+
+### GUI Configuration Editor
+
+A PyQt6-based GUI is available at `gui/task_config_editor.py` for easy configuration editing:
+
+```bash
+python3 gui/task_config_editor.py
+```
+
+Features:
+*   Dark theme interface with tabbed layout (one tab per task)
+*   Smart controls: time pickers, day selectors, checkboxes for booleans
+*   Save button writes changes to `trigger.json` files
+*   Terminate button to immediately stop running tasks
+*   Changes are automatically detected by the file watcher

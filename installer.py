@@ -66,26 +66,61 @@ WantedBy=default.target
     
     return service_name
 
+def install_dependencies():
+    """Install required Python packages via apt"""
+    print("\n=== Installing Required Python Dependencies ===")
+    print("Note: pyRTOS must be installed manually (not available in apt or pip)")
+
+    packages = [
+        "python3-vlc",
+        "python3-psutil",
+        "python3-watchdog",
+        "python3-pyqt6"
+    ]
+
+    try:
+        print("\nInstalling Python packages via apt...")
+        print("Packages: " + ", ".join(packages))
+
+        # Install packages
+        cmd = ["sudo", "apt", "install", "-y"] + packages
+        result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+
+        print("✓ Python dependencies installed successfully")
+
+    except subprocess.CalledProcessError as e:
+        print(f"Warning: Failed to install some dependencies: {e}")
+        print("You may need to install them manually using:")
+        print(f"sudo apt install -y {' '.join(packages)}")
+
+        choice = input("\nContinue with installation anyway? (y/n): ").strip().lower()
+        if choice != 'y':
+            print("Installation cancelled.")
+            sys.exit(1)
+
 def enable_and_start_service(service_name):
     try:
         # Reload systemd daemon
         subprocess.run(["systemctl", "--user", "daemon-reload"], check=True)
-        
+
         # Enable the service
         subprocess.run(["systemctl", "--user", "enable", service_name], check=True)
-        
+
         # Start the service
         subprocess.run(["systemctl", "--user", "start", service_name], check=True)
-        
+
         # Enable lingering for the current user (allows user services to run at boot)
         username = getpass.getuser()
         subprocess.run(["sudo", "loginctl", "enable-linger", username], check=True)
-        
+
     except subprocess.CalledProcessError as e:
         print(f"Error setting up service: {e}")
         sys.exit(1)
 
 def main():
+    # Install dependencies first
+    install_dependencies()
+
     sh_files = find_sh_files()
 
     if sh_files:
@@ -96,7 +131,7 @@ def main():
     else:
         print("No .sh files found in the current directory.")
         input_choice = input("Would you like to provide the absolute or relative path to the script? (a/r): ").strip().lower()
-        
+
         if input_choice == 'a':
             selected_script = input("Enter the absolute path to the shell script: ").strip()
         elif input_choice == 'r':
@@ -125,7 +160,7 @@ def main():
     logs_dir = os.path.join(script_dir, "logs")
     if not os.path.exists(logs_dir):
         os.makedirs(logs_dir)
-    
+
     output_path = os.path.join(logs_dir, "output.out")
 
     # Create and enable systemd service
