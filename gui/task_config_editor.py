@@ -119,10 +119,33 @@ class TaskConfigTab(QWidget):
         duration_group.setLayout(duration_layout)
         main_layout.addWidget(duration_group)
 
-        # Save button
+        # Buttons
         button_layout = QHBoxLayout()
         button_layout.addStretch()
 
+        # Terminate button
+        self.terminate_button = QPushButton("🛑 Terminate Task")
+        self.terminate_button.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                padding: 10px 30px;
+                font-size: 14px;
+                border-radius: 5px;
+                font-weight: bold;
+            }
+            QPushButton:hover {
+                background-color: #da190b;
+            }
+            QPushButton:pressed {
+                background-color: #c1190b;
+            }
+        """)
+        self.terminate_button.setToolTip("Create .terminate file to stop this task immediately")
+        self.terminate_button.clicked.connect(self.terminate_task)
+        button_layout.addWidget(self.terminate_button)
+
+        # Save button
         self.save_button = QPushButton("💾 Save Configuration")
         self.save_button.setStyleSheet("""
             QPushButton {
@@ -201,6 +224,40 @@ class TaskConfigTab(QWidget):
                 "Error",
                 f"Failed to save configuration:\n{str(e)}"
             )
+
+    def terminate_task(self):
+        """Create a .terminate file to stop the task immediately"""
+        # Get the tasks directory (parent of task_path)
+        tasks_dir = os.path.dirname(self.task_path)
+        terminate_file = os.path.join(tasks_dir, f"{self.task_name}.terminate")
+
+        # Confirm action
+        reply = QMessageBox.question(
+            self,
+            "Terminate Task",
+            f"This will stop the '{self.task_name}' task immediately.\n\nAre you sure?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                # Create the terminate file
+                with open(terminate_file, 'w') as f:
+                    f.write("")  # Empty file
+
+                QMessageBox.information(
+                    self,
+                    "Success",
+                    f"Terminate signal sent to '{self.task_name}'.\n\n"
+                    f"The task will stop within 1 second if it's running."
+                )
+            except Exception as e:
+                QMessageBox.critical(
+                    self,
+                    "Error",
+                    f"Failed to create terminate file:\n{str(e)}"
+                )
 
 
 class MainWindow(QMainWindow):

@@ -1,7 +1,16 @@
 {
     "schedule_on": true,
     "timeout_on": true,
-    "days_of_week": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-    "time_of_day": "15:36",
-    "timeout_interval": 10
+    "days_of_week": [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday"
+    ],
+    "time_of_day": "15:30",
+    "timeout_interval": 20,
+    "max_duration": 60
 }

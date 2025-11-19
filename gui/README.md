@@ -56,6 +56,7 @@ python3 gui/task_config_editor.py
 - **Max Duration**: Maximum runtime in seconds (0 = no limit)
 
 #### Actions
+- **🛑 Terminate Task**: Immediately stops the task by creating a .terminate file (with confirmation)
 - **💾 Save Configuration**: Saves changes to the task's trigger.json file
 
 ## How It Works
