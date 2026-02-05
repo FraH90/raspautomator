@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 
 # Same as your radio example, but referencing the same package structure:
 from task.bluetooth_handler import BluetoothHandler
+from task.volume_controller import SystemVolumeController
 
 CURRENT_TASK_DIR = os.path.dirname(__file__)
 CONFIG_FILE = os.path.join(CURRENT_TASK_DIR, 'config.json')
@@ -63,6 +64,11 @@ class SleepSoundsPlayer:
             self.bluetooth_mac = self.config['bluetooth_devices'][0]['mac_address']
             self.stop_time_str = self.config['stop_time']
 
+            # Load volume settings (with defaults if not present)
+            volume_config = self.config.get('volume', {})
+            self.system_volume = volume_config.get('system_volume', 70)
+            self.vlc_volume = volume_config.get('vlc_volume', 50)
+
             with open(SOURCES_FILE, 'r') as f:
                 sources = json.load(f)
             self.youtube_urls = sources['youtube_urls']
@@ -95,6 +101,17 @@ class SleepSoundsPlayer:
                 return False
 
             self.logger.info(f"Connected to Bluetooth device: {self.bluetooth_mac}")
+
+            # Wait for PulseAudio to detect the Bluetooth sink (takes a moment after connection)
+            self.logger.info("Waiting for PulseAudio to detect Bluetooth sink...")
+            time.sleep(3)
+
+            # Set system volume before playing
+            volume_controller = SystemVolumeController(self.logger)
+            if volume_controller.set_bluetooth_volume(self.bluetooth_mac, self.system_volume):
+                self.logger.info(f"System volume set to {self.system_volume}%")
+            else:
+                self.logger.warning(f"Failed to set system volume, continuing with current volume")
 
             # Pick a single random track from the list
             chosen_url = random.choice(self.youtube_urls)
@@ -139,7 +156,7 @@ class SleepSoundsPlayer:
 
         # We can set volume on the underlying media player object
         media_player = list_player.get_media_player()
-        media_player.audio_set_volume(50)
+        media_player.audio_set_volume(self.vlc_volume)
 
         # Start playing in loop
         list_player.play()

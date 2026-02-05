@@ -7,6 +7,7 @@ import os
 import threading
 import psutil
 from task.bluetooth_handler import BluetoothHandler
+from task.volume_controller import SystemVolumeController
 import logging
 
 CURRENT_TASK_DIR = os.path.dirname(__file__)
@@ -41,6 +42,11 @@ class RadioPlayer:
             # Get the first bluetooth device's MAC address from config
             self.bluetooth_mac = self.config['bluetooth_devices'][0]['mac_address']
             self.radio_streams = self.load_radio_streams()
+
+            # Load volume settings (with defaults if not present)
+            volume_config = self.config.get('volume', {})
+            self.system_volume = volume_config.get('system_volume', 70)
+            self.vlc_volume = volume_config.get('vlc_volume', 50)
         except Exception as e:
             self.logger.error(f"Error loading configuration: {str(e)}")
             raise
@@ -70,7 +76,7 @@ class RadioPlayer:
             player = instance.media_player_new()
             media = instance.media_new(stream_url)
             player.set_media(media)
-            player.audio_set_volume(50)
+            player.audio_set_volume(self.vlc_volume)
             player.play()
 
             print(f"{time.strftime('%H:%M')} - Playing radio {radio_name}")
@@ -106,6 +112,18 @@ class RadioPlayer:
             # Try to connect
             if bluetooth_handler.connect():
                 self.logger.info(f"Connected to Bluetooth device: {self.bluetooth_mac}")
+
+                # Wait for PulseAudio to detect the Bluetooth sink (takes a moment after connection)
+                self.logger.info("Waiting for PulseAudio to detect Bluetooth sink...")
+                time.sleep(3)
+
+                # Set system volume before playing
+                volume_controller = SystemVolumeController(self.logger)
+                if volume_controller.set_bluetooth_volume(self.bluetooth_mac, self.system_volume):
+                    self.logger.info(f"System volume set to {self.system_volume}%")
+                else:
+                    self.logger.warning(f"Failed to set system volume, continuing with current volume")
+
                 self.play_radio(radio_stream_url, radio_name, stop_event)
             else:
                 self.logger.error("Failed to connect to Bluetooth speaker. Exiting.")

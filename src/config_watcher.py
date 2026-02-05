@@ -39,7 +39,7 @@ class TaskRegistry:
 
 
 class ConfigFileHandler(FileSystemEventHandler):
-    """Handles file system events for trigger.json files"""
+    """Handles file system events for trigger.json and config.json files"""
 
     def __init__(self, tasks_dir):
         super().__init__()
@@ -50,12 +50,17 @@ class ConfigFileHandler(FileSystemEventHandler):
         if event.is_directory:
             return
 
-        # Check if it's a trigger.json file
-        if os.path.basename(event.src_path) == "trigger.json":
-            self._reload_config(event.src_path)
+        filename = os.path.basename(event.src_path)
 
-    def _reload_config(self, config_path):
-        """Reload configuration for a specific task"""
+        # Check if it's a trigger.json file
+        if filename == "trigger.json":
+            self._reload_trigger_config(event.src_path)
+        # Check if it's a config.json file
+        elif filename == "config.json":
+            self._reload_task_config(event.src_path)
+
+    def _reload_trigger_config(self, config_path):
+        """Reload trigger.json configuration for a specific task"""
         try:
             # Get task name from path (parent directory name)
             task_dir = os.path.dirname(config_path)
@@ -68,11 +73,11 @@ class ConfigFileHandler(FileSystemEventHandler):
             # Get the task instance from registry
             task_instance = TaskRegistry.get(task_name)
             if task_instance:
-                # Update the task's configuration
+                # Update the task's trigger configuration
                 old_config = task_instance.config.copy()
                 task_instance.config = new_config
 
-                logger.info(f"📝 Configuration reloaded for task '{task_name}'")
+                logger.info(f"📝 Trigger configuration reloaded for task '{task_name}'")
 
                 # Log what changed
                 changes = []
@@ -91,13 +96,45 @@ class ConfigFileHandler(FileSystemEventHandler):
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON in {config_path}: {e}")
         except Exception as e:
-            logger.error(f"Error reloading config for {config_path}: {e}")
+            logger.error(f"Error reloading trigger config for {config_path}: {e}")
+
+    def _reload_task_config(self, config_path):
+        """
+        Log when config.json is modified.
+        These changes (volume, bluetooth, etc.) will take effect on the next task execution.
+        """
+        try:
+            # Get task name from path (parent directory name)
+            task_dir = os.path.dirname(config_path)
+            task_name = os.path.basename(task_dir)
+
+            # Load and validate the new configuration
+            with open(config_path, 'r') as f:
+                new_config = json.load(f)
+
+            logger.info(f"🔧 Task config.json modified for '{task_name}'")
+
+            # Log relevant changes if volume settings are present
+            if 'volume' in new_config:
+                volume = new_config['volume']
+                logger.info(f"   Volume settings: System={volume.get('system_volume', 'N/A')}%, "
+                          f"VLC={volume.get('vlc_volume', 'N/A')}%")
+
+            logger.info(f"   → Changes will apply on next task execution")
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Invalid JSON in {config_path}: {e}")
+        except Exception as e:
+            logger.error(f"Error processing config.json change for {config_path}: {e}")
 
 
 class ConfigWatcher:
     """
-    Watches the tasks directory for changes to trigger.json files
+    Watches the tasks directory for changes to trigger.json and config.json files
     and automatically reloads configurations.
+
+    - trigger.json changes: Applied immediately (affects scheduling)
+    - config.json changes: Applied on next task execution (affects task behavior like volume)
     """
 
     def __init__(self, tasks_dir):

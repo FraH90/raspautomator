@@ -11,7 +11,7 @@ from pathlib import Path
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QTabWidget, QLabel, QCheckBox, QTimeEdit, QSpinBox,
-    QPushButton, QGroupBox, QMessageBox, QFormLayout
+    QPushButton, QGroupBox, QMessageBox, QFormLayout, QSlider
 )
 from PyQt6.QtCore import Qt, QTime
 from PyQt6.QtGui import QPalette, QColor
@@ -49,12 +49,14 @@ class DaySelector(QWidget):
 
 class TaskConfigTab(QWidget):
     """Tab for editing a single task's configuration"""
-    def __init__(self, task_name, task_path, config_data):
+    def __init__(self, task_name, task_path, trigger_data, task_config_data):
         super().__init__()
         self.task_name = task_name
         self.task_path = task_path
-        self.config_file = os.path.join(task_path, "trigger.json")
-        self.config_data = config_data
+        self.trigger_file = os.path.join(task_path, "trigger.json")
+        self.task_config_file = os.path.join(task_path, "config.json")
+        self.trigger_data = trigger_data
+        self.task_config_data = task_config_data
         self.init_ui()
         self.load_config()
 
@@ -119,6 +121,62 @@ class TaskConfigTab(QWidget):
         duration_group.setLayout(duration_layout)
         main_layout.addWidget(duration_group)
 
+        # Volume group (only show if config.json has volume settings)
+        volume_group = QGroupBox("Volume Configuration")
+        volume_layout = QFormLayout()
+
+        # System Volume slider with label showing value
+        system_volume_container = QWidget()
+        system_volume_layout = QHBoxLayout()
+        system_volume_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.system_volume = QSlider(Qt.Orientation.Horizontal)
+        self.system_volume.setRange(0, 100)
+        self.system_volume.setSingleStep(5)
+        self.system_volume.setPageStep(10)
+        self.system_volume.setToolTip("System (PulseAudio) volume for Bluetooth speaker (0-100%)")
+
+        self.system_volume_label = QLabel("70%")
+        self.system_volume_label.setMinimumWidth(50)
+        self.system_volume_label.setStyleSheet("color: #4CAF50; font-weight: bold;")
+        self.system_volume.valueChanged.connect(
+            lambda v: self.system_volume_label.setText(f"{v}%")
+        )
+
+        system_volume_layout.addWidget(self.system_volume)
+        system_volume_layout.addWidget(self.system_volume_label)
+        system_volume_container.setLayout(system_volume_layout)
+        volume_layout.addRow("System Volume:", system_volume_container)
+
+        # VLC Volume slider with label showing value
+        vlc_volume_container = QWidget()
+        vlc_volume_layout = QHBoxLayout()
+        vlc_volume_layout.setContentsMargins(0, 0, 0, 0)
+
+        self.vlc_volume = QSlider(Qt.Orientation.Horizontal)
+        self.vlc_volume.setRange(0, 100)
+        self.vlc_volume.setSingleStep(5)
+        self.vlc_volume.setPageStep(10)
+        self.vlc_volume.setToolTip("VLC player volume (0-100%)")
+
+        self.vlc_volume_label = QLabel("50%")
+        self.vlc_volume_label.setMinimumWidth(50)
+        self.vlc_volume_label.setStyleSheet("color: #4CAF50; font-weight: bold;")
+        self.vlc_volume.valueChanged.connect(
+            lambda v: self.vlc_volume_label.setText(f"{v}%")
+        )
+
+        vlc_volume_layout.addWidget(self.vlc_volume)
+        vlc_volume_layout.addWidget(self.vlc_volume_label)
+        vlc_volume_container.setLayout(vlc_volume_layout)
+        volume_layout.addRow("VLC Volume:", vlc_volume_container)
+
+        volume_group.setLayout(volume_layout)
+        main_layout.addWidget(volume_group)
+
+        # Store reference to volume group so we can hide it if needed
+        self.volume_group = volume_group
+
         # Buttons
         button_layout = QHBoxLayout()
 
@@ -175,29 +233,39 @@ class TaskConfigTab(QWidget):
 
     def load_config(self):
         """Load configuration from JSON data into UI controls"""
-        # Schedule settings
-        self.schedule_on.setChecked(self.config_data.get("schedule_on", False))
+        # Schedule settings (from trigger.json)
+        self.schedule_on.setChecked(self.trigger_data.get("schedule_on", False))
 
         # Time of day
-        time_str = self.config_data.get("time_of_day", "00:00")
+        time_str = self.trigger_data.get("time_of_day", "00:00")
         hour, minute = map(int, time_str.split(":"))
         self.time_of_day.setTime(QTime(hour, minute))
 
         # Days of week
-        days = self.config_data.get("days_of_week", [])
+        days = self.trigger_data.get("days_of_week", [])
         self.days_selector.set_selected_days(days)
 
         # Timeout settings
-        self.timeout_on.setChecked(self.config_data.get("timeout_on", False))
-        self.timeout_interval.setValue(self.config_data.get("timeout_interval", 60))
+        self.timeout_on.setChecked(self.trigger_data.get("timeout_on", False))
+        self.timeout_interval.setValue(self.trigger_data.get("timeout_interval", 60))
 
         # Max duration
-        self.max_duration.setValue(self.config_data.get("max_duration", 0))
+        self.max_duration.setValue(self.trigger_data.get("max_duration", 0))
+
+        # Volume settings (from config.json)
+        if self.task_config_data and "volume" in self.task_config_data:
+            volume_config = self.task_config_data["volume"]
+            self.system_volume.setValue(volume_config.get("system_volume", 70))
+            self.vlc_volume.setValue(volume_config.get("vlc_volume", 50))
+            self.volume_group.setVisible(True)
+        else:
+            # Hide volume group if not supported by this task
+            self.volume_group.setVisible(False)
 
     def save_config(self):
-        """Save configuration from UI controls to JSON file"""
-        # Build config dictionary
-        config = {
+        """Save configuration from UI controls to JSON files"""
+        # Build trigger config dictionary
+        trigger_config = {
             "schedule_on": self.schedule_on.isChecked(),
             "timeout_on": self.timeout_on.isChecked(),
             "days_of_week": self.days_selector.get_selected_days(),
@@ -208,24 +276,47 @@ class TaskConfigTab(QWidget):
         # Only add max_duration if it's not 0
         max_dur = self.max_duration.value()
         if max_dur > 0:
-            config["max_duration"] = max_dur
+            trigger_config["max_duration"] = max_dur
 
-        # Save to file
+        # Save trigger.json
         try:
-            with open(self.config_file, 'w') as f:
-                json.dump(config, f, indent=4)
-
-            QMessageBox.information(
-                self,
-                "Success",
-                f"Configuration for '{self.task_name}' saved successfully!"
-            )
+            with open(self.trigger_file, 'w') as f:
+                json.dump(trigger_config, f, indent=4)
         except Exception as e:
             QMessageBox.critical(
                 self,
                 "Error",
-                f"Failed to save configuration:\n{str(e)}"
+                f"Failed to save trigger configuration:\n{str(e)}"
             )
+            return
+
+        # Save volume settings to config.json if it exists and has volume
+        if self.task_config_data and self.volume_group.isVisible():
+            try:
+                # Update volume settings in task config
+                if "volume" not in self.task_config_data:
+                    self.task_config_data["volume"] = {}
+
+                self.task_config_data["volume"]["system_volume"] = self.system_volume.value()
+                self.task_config_data["volume"]["vlc_volume"] = self.vlc_volume.value()
+
+                # Save updated config.json
+                with open(self.task_config_file, 'w') as f:
+                    json.dump(self.task_config_data, f, indent=4)
+
+            except Exception as e:
+                QMessageBox.critical(
+                    self,
+                    "Error",
+                    f"Failed to save volume configuration:\n{str(e)}"
+                )
+                return
+
+        QMessageBox.information(
+            self,
+            "Success",
+            f"Configuration for '{self.task_name}' saved successfully!"
+        )
 
     def terminate_task(self):
         """Create a .terminate file to stop the task immediately"""
@@ -340,17 +431,27 @@ class MainWindow(QMainWindow):
                 continue
 
             # Check if trigger.json exists
-            config_file = os.path.join(task_path, "trigger.json")
-            if not os.path.exists(config_file):
+            trigger_file = os.path.join(task_path, "trigger.json")
+            if not os.path.exists(trigger_file):
                 continue
 
-            # Load configuration
+            # Load trigger configuration
             try:
-                with open(config_file, 'r') as f:
-                    config_data = json.load(f)
+                with open(trigger_file, 'r') as f:
+                    trigger_data = json.load(f)
+
+                # Try to load task config.json (optional)
+                task_config_file = os.path.join(task_path, "config.json")
+                task_config_data = None
+                if os.path.exists(task_config_file):
+                    try:
+                        with open(task_config_file, 'r') as f:
+                            task_config_data = json.load(f)
+                    except Exception as e:
+                        print(f"Warning: Could not load config.json for {item}: {e}")
 
                 # Create tab for this task
-                tab = TaskConfigTab(item, task_path, config_data)
+                tab = TaskConfigTab(item, task_path, trigger_data, task_config_data)
                 self.tabs.addTab(tab, item)
                 task_count += 1
 

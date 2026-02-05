@@ -5,5 +5,9 @@
         "name": "Carbonara Bedroom Speaker Logitech",
         "mac_address": "EC:81:93:F8:23:2B"
       }
-    ]
+    ],
+    "volume": {
+        "system_volume": 70,
+        "vlc_volume": 50
+    }
 }
