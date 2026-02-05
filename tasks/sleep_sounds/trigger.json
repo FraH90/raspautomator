@@ -2,7 +2,7 @@
     "schedule_on": true,
     "timeout_on": false,
     "days_of_week": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Sunday"],
-    "time_of_day": "23:30",
+    "time_of_day": "00:00",
     "max_duration": 12600,
     "timeout_interval": 3600
 }

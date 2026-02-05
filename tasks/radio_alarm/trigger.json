@@ -6,10 +6,9 @@
         "Tuesday",
         "Wednesday",
         "Thursday",
-        "Friday",
-        "Saturday"
+        "Friday"
     ],
-    "time_of_day": "11:00",
+    "time_of_day": "08:15",
     "timeout_interval": 3600,
     "max_duration": 5400
 }
