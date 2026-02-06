@@ -7,14 +7,16 @@ A modern dark-themed GUI for editing task trigger.json files
 import sys
 import os
 import json
+import subprocess
 from pathlib import Path
 from PyQt6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout,
     QTabWidget, QLabel, QCheckBox, QTimeEdit, QSpinBox,
-    QPushButton, QGroupBox, QMessageBox, QFormLayout, QSlider
+    QPushButton, QGroupBox, QMessageBox, QFormLayout, QSlider,
+    QScrollArea, QFrame, QPlainTextEdit
 )
 from PyQt6.QtCore import Qt, QTime
-from PyQt6.QtGui import QPalette, QColor
+from PyQt6.QtGui import QPalette, QColor, QFont
 
 
 class DaySelector(QWidget):
@@ -47,6 +49,64 @@ class DaySelector(QWidget):
         return [day for day in self.days if self.checkboxes[day].isChecked()]
 
 
+class ScheduleRow(QWidget):
+    """A single schedule row with day selector, time picker, and remove button"""
+    def __init__(self, on_remove=None):
+        super().__init__()
+        self._on_remove = on_remove
+        self.init_ui()
+
+    def init_ui(self):
+        layout = QHBoxLayout()
+        layout.setContentsMargins(0, 2, 0, 2)
+
+        # Time picker
+        self.time_edit = QTimeEdit()
+        self.time_edit.setDisplayFormat("HH:mm")
+        self.time_edit.setFixedWidth(80)
+        layout.addWidget(self.time_edit)
+
+        # Day selector
+        self.days_selector = DaySelector()
+        layout.addWidget(self.days_selector)
+
+        # Remove button
+        self.remove_button = QPushButton("X")
+        self.remove_button.setFixedWidth(30)
+        self.remove_button.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336;
+                color: white;
+                font-weight: bold;
+                border-radius: 3px;
+                padding: 2px;
+            }
+            QPushButton:hover { background-color: #da190b; }
+        """)
+        self.remove_button.setToolTip("Remove this schedule")
+        self.remove_button.clicked.connect(self._remove)
+        layout.addWidget(self.remove_button)
+
+        self.setLayout(layout)
+
+    def _remove(self):
+        if self._on_remove:
+            self._on_remove(self)
+
+    def set_data(self, days, time_str):
+        """Load data into the row"""
+        self.days_selector.set_selected_days(days)
+        hour, minute = map(int, time_str.split(":"))
+        self.time_edit.setTime(QTime(hour, minute))
+
+    def get_data(self):
+        """Extract data from the row"""
+        return {
+            "days": self.days_selector.get_selected_days(),
+            "time": self.time_edit.time().toString("HH:mm")
+        }
+
+
 class TaskConfigTab(QWidget):
     """Tab for editing a single task's configuration"""
     def __init__(self, task_name, task_path, trigger_data, task_config_data):
@@ -57,6 +117,7 @@ class TaskConfigTab(QWidget):
         self.task_config_file = os.path.join(task_path, "config.json")
         self.trigger_data = trigger_data
         self.task_config_data = task_config_data
+        self.schedule_rows = []
         self.init_ui()
         self.load_config()
 
@@ -70,22 +131,37 @@ class TaskConfigTab(QWidget):
 
         # Scheduling group
         schedule_group = QGroupBox("Scheduling Configuration")
-        schedule_layout = QFormLayout()
+        schedule_outer_layout = QVBoxLayout()
 
         # Schedule On/Off
+        schedule_toggle_layout = QHBoxLayout()
+        schedule_toggle_layout.addWidget(QLabel("Schedule Enabled:"))
         self.schedule_on = QCheckBox()
-        schedule_layout.addRow("Schedule Enabled:", self.schedule_on)
+        schedule_toggle_layout.addWidget(self.schedule_on)
+        schedule_toggle_layout.addStretch()
+        schedule_outer_layout.addLayout(schedule_toggle_layout)
 
-        # Time of Day
-        self.time_of_day = QTimeEdit()
-        self.time_of_day.setDisplayFormat("HH:mm")
-        schedule_layout.addRow("Time of Day:", self.time_of_day)
+        # Schedule rows container
+        self.schedules_container = QVBoxLayout()
+        self.schedules_container.setSpacing(4)
+        schedule_outer_layout.addLayout(self.schedules_container)
 
-        # Days of Week
-        self.days_selector = DaySelector()
-        schedule_layout.addRow("Days of Week:", self.days_selector)
+        # Add schedule button
+        add_schedule_btn = QPushButton("+ Add Schedule")
+        add_schedule_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #2196F3;
+                color: white;
+                padding: 6px 16px;
+                border-radius: 3px;
+                font-weight: bold;
+            }
+            QPushButton:hover { background-color: #1976D2; }
+        """)
+        add_schedule_btn.clicked.connect(self.add_schedule_row)
+        schedule_outer_layout.addWidget(add_schedule_btn)
 
-        schedule_group.setLayout(schedule_layout)
+        schedule_group.setLayout(schedule_outer_layout)
         main_layout.addWidget(schedule_group)
 
         # Timeout group
@@ -181,7 +257,7 @@ class TaskConfigTab(QWidget):
         button_layout = QHBoxLayout()
 
         # Terminate button (extreme left)
-        self.terminate_button = QPushButton("🛑 Terminate Task")
+        self.terminate_button = QPushButton("Terminate Task")
         self.terminate_button.setStyleSheet("""
             QPushButton {
                 background-color: #f44336;
@@ -206,7 +282,7 @@ class TaskConfigTab(QWidget):
         button_layout.addStretch()
 
         # Save button (extreme right)
-        self.save_button = QPushButton("💾 Save Configuration")
+        self.save_button = QPushButton("Save Configuration")
         self.save_button.setStyleSheet("""
             QPushButton {
                 background-color: #4CAF50;
@@ -231,19 +307,57 @@ class TaskConfigTab(QWidget):
 
         self.setLayout(main_layout)
 
+    def add_schedule_row(self, days=None, time_str="08:00"):
+        """Add a new schedule row to the UI"""
+        row = ScheduleRow(on_remove=self.remove_schedule_row)
+        if days:
+            row.set_data(days, time_str)
+        self.schedule_rows.append(row)
+        self.schedules_container.addWidget(row)
+        self._update_remove_buttons()
+        return row
+
+    def remove_schedule_row(self, row):
+        """Remove a schedule row from the UI"""
+        if len(self.schedule_rows) <= 1:
+            return  # Keep at least one row
+        self.schedule_rows.remove(row)
+        self.schedules_container.removeWidget(row)
+        row.deleteLater()
+        self._update_remove_buttons()
+
+    def _update_remove_buttons(self):
+        """Hide remove button if only one schedule row remains"""
+        for row in self.schedule_rows:
+            row.remove_button.setVisible(len(self.schedule_rows) > 1)
+
     def load_config(self):
         """Load configuration from JSON data into UI controls"""
         # Schedule settings (from trigger.json)
         self.schedule_on.setChecked(self.trigger_data.get("schedule_on", False))
 
-        # Time of day
-        time_str = self.trigger_data.get("time_of_day", "00:00")
-        hour, minute = map(int, time_str.split(":"))
-        self.time_of_day.setTime(QTime(hour, minute))
+        # Load schedules (support both old and new format)
+        if "schedules" in self.trigger_data:
+            schedules = self.trigger_data["schedules"]
+        elif "days_of_week" in self.trigger_data:
+            # Old format: convert to schedules
+            schedules = [{
+                "days": self.trigger_data.get("days_of_week", []),
+                "time": self.trigger_data.get("time_of_day", "00:00")
+            }]
+        else:
+            schedules = [{"days": [], "time": "00:00"}]
 
-        # Days of week
-        days = self.trigger_data.get("days_of_week", [])
-        self.days_selector.set_selected_days(days)
+        # Create schedule rows
+        for schedule in schedules:
+            self.add_schedule_row(
+                days=schedule.get("days", []),
+                time_str=schedule.get("time", "00:00")
+            )
+
+        # If no schedules loaded, add an empty one
+        if not self.schedule_rows:
+            self.add_schedule_row()
 
         # Timeout settings
         self.timeout_on.setChecked(self.trigger_data.get("timeout_on", False))
@@ -264,12 +378,14 @@ class TaskConfigTab(QWidget):
 
     def save_config(self):
         """Save configuration from UI controls to JSON files"""
-        # Build trigger config dictionary
+        # Build schedules from rows
+        schedules = [row.get_data() for row in self.schedule_rows]
+
+        # Build trigger config dictionary (new format)
         trigger_config = {
             "schedule_on": self.schedule_on.isChecked(),
             "timeout_on": self.timeout_on.isChecked(),
-            "days_of_week": self.days_selector.get_selected_days(),
-            "time_of_day": self.time_of_day.time().toString("HH:mm"),
+            "schedules": schedules,
             "timeout_interval": self.timeout_interval.value()
         }
 
@@ -312,11 +428,29 @@ class TaskConfigTab(QWidget):
                 )
                 return
 
-        QMessageBox.information(
+        reply = QMessageBox.question(
             self,
-            "Success",
-            f"Configuration for '{self.task_name}' saved successfully!"
+            "Configuration Saved",
+            f"Configuration for '{self.task_name}' saved successfully!\n\n"
+            "Do you want to restart the service to apply changes?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
         )
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                result = subprocess.run(
+                    ["systemctl", "--user", "restart", SERVICE_NAME],
+                    capture_output=True, text=True
+                )
+                if result.returncode == 0:
+                    QMessageBox.information(self, "Success", "Service restarted successfully.")
+                else:
+                    QMessageBox.warning(
+                        self, "Warning",
+                        f"Service restart returned an error:\n{result.stderr.strip()}"
+                    )
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to restart service:\n{str(e)}")
 
     def terminate_task(self):
         """Create a .terminate file to stop the task immediately"""
@@ -353,6 +487,213 @@ class TaskConfigTab(QWidget):
                 )
 
 
+SERVICE_NAME = "automator.service"
+
+
+class ServiceTab(QWidget):
+    """Tab for managing the automator systemd service"""
+    def __init__(self, project_root):
+        super().__init__()
+        self.project_root = project_root
+        self.log_file = os.path.join(project_root, "logs", "output.out")
+        self.init_ui()
+        self.refresh_status()
+        self.refresh_logs()
+
+    def init_ui(self):
+        main_layout = QVBoxLayout()
+
+        # --- Service Status ---
+        status_group = QGroupBox("Service Status")
+        status_layout = QVBoxLayout()
+
+        self.status_label = QLabel("Checking...")
+        self.status_label.setStyleSheet("font-size: 16px; font-weight: bold; padding: 10px;")
+        status_layout.addWidget(self.status_label)
+
+        refresh_status_btn = QPushButton("Refresh Status")
+        refresh_status_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #555;
+                color: white;
+                padding: 6px 16px;
+                border-radius: 3px;
+            }
+            QPushButton:hover { background-color: #666; }
+        """)
+        refresh_status_btn.clicked.connect(self.refresh_status)
+        status_layout.addWidget(refresh_status_btn)
+
+        status_group.setLayout(status_layout)
+        main_layout.addWidget(status_group)
+
+        # --- Service Controls ---
+        controls_group = QGroupBox("Service Controls")
+        controls_layout = QHBoxLayout()
+
+        start_btn = QPushButton("Start Service")
+        start_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #4CAF50; color: white;
+                padding: 10px 20px; font-size: 14px;
+                border-radius: 5px; font-weight: bold;
+            }
+            QPushButton:hover { background-color: #45a049; }
+        """)
+        start_btn.clicked.connect(lambda: self.service_action("start"))
+        controls_layout.addWidget(start_btn)
+
+        stop_btn = QPushButton("Stop Service")
+        stop_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336; color: white;
+                padding: 10px 20px; font-size: 14px;
+                border-radius: 5px; font-weight: bold;
+            }
+            QPushButton:hover { background-color: #da190b; }
+        """)
+        stop_btn.clicked.connect(lambda: self.service_action("stop"))
+        controls_layout.addWidget(stop_btn)
+
+        restart_btn = QPushButton("Restart Service")
+        restart_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #2196F3; color: white;
+                padding: 10px 20px; font-size: 14px;
+                border-radius: 5px; font-weight: bold;
+            }
+            QPushButton:hover { background-color: #1976D2; }
+        """)
+        restart_btn.clicked.connect(lambda: self.service_action("restart"))
+        controls_layout.addWidget(restart_btn)
+
+        controls_group.setLayout(controls_layout)
+        main_layout.addWidget(controls_group)
+
+        # --- Service Logs ---
+        logs_group = QGroupBox("Service Logs")
+        logs_layout = QVBoxLayout()
+
+        self.log_viewer = QPlainTextEdit()
+        self.log_viewer.setReadOnly(True)
+        self.log_viewer.setFont(QFont("Monospace", 9))
+        self.log_viewer.setStyleSheet("""
+            QPlainTextEdit {
+                background-color: #1e1e1e;
+                color: #d4d4d4;
+                border: 1px solid #555;
+                border-radius: 3px;
+            }
+        """)
+        self.log_viewer.setMinimumHeight(300)
+        logs_layout.addWidget(self.log_viewer)
+
+        log_buttons_layout = QHBoxLayout()
+
+        refresh_logs_btn = QPushButton("Refresh Logs")
+        refresh_logs_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #555; color: white;
+                padding: 6px 16px; border-radius: 3px;
+            }
+            QPushButton:hover { background-color: #666; }
+        """)
+        refresh_logs_btn.clicked.connect(self.refresh_logs)
+        log_buttons_layout.addWidget(refresh_logs_btn)
+
+        clear_logs_btn = QPushButton("Clear Logs")
+        clear_logs_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #f44336; color: white;
+                padding: 6px 16px; border-radius: 3px;
+            }
+            QPushButton:hover { background-color: #da190b; }
+        """)
+        clear_logs_btn.clicked.connect(self.clear_logs)
+        log_buttons_layout.addWidget(clear_logs_btn)
+
+        log_buttons_layout.addStretch()
+        logs_layout.addLayout(log_buttons_layout)
+
+        logs_group.setLayout(logs_layout)
+        main_layout.addWidget(logs_group)
+
+        self.setLayout(main_layout)
+
+    def refresh_status(self):
+        """Check and display the service status"""
+        try:
+            result = subprocess.run(
+                ["systemctl", "--user", "is-active", SERVICE_NAME],
+                capture_output=True, text=True
+            )
+            state = result.stdout.strip()
+        except Exception:
+            state = "unknown"
+
+        color_map = {
+            "active": "#4CAF50",
+            "inactive": "#888",
+            "failed": "#f44336",
+        }
+        color = color_map.get(state, "#FF9800")
+        self.status_label.setText(f"Service: {state}")
+        self.status_label.setStyleSheet(
+            f"font-size: 16px; font-weight: bold; padding: 10px; color: {color};"
+        )
+
+    def service_action(self, action):
+        """Run a systemctl action (start/stop/restart)"""
+        try:
+            result = subprocess.run(
+                ["systemctl", "--user", action, SERVICE_NAME],
+                capture_output=True, text=True
+            )
+            if result.returncode == 0:
+                QMessageBox.information(self, "Success", f"Service {action} successful.")
+            else:
+                QMessageBox.warning(
+                    self, "Warning",
+                    f"Service {action} returned an error:\n{result.stderr.strip()}"
+                )
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to {action} service:\n{str(e)}")
+        self.refresh_status()
+
+    def refresh_logs(self):
+        """Load the last 200 lines from the log file"""
+        if not os.path.exists(self.log_file):
+            self.log_viewer.setPlainText("(Log file not found)")
+            return
+        try:
+            with open(self.log_file, 'r') as f:
+                lines = f.readlines()
+            tail = lines[-200:] if len(lines) > 200 else lines
+            self.log_viewer.setPlainText("".join(tail))
+            # Scroll to bottom
+            scrollbar = self.log_viewer.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
+        except Exception as e:
+            self.log_viewer.setPlainText(f"Error reading log file:\n{str(e)}")
+
+    def clear_logs(self):
+        """Truncate the log file after confirmation"""
+        reply = QMessageBox.question(
+            self, "Clear Logs",
+            "This will delete all log contents. Are you sure?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No
+        )
+        if reply == QMessageBox.StandardButton.Yes:
+            try:
+                with open(self.log_file, 'w') as f:
+                    f.truncate(0)
+                self.log_viewer.setPlainText("")
+                QMessageBox.information(self, "Success", "Logs cleared.")
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"Failed to clear logs:\n{str(e)}")
+
+
 class MainWindow(QMainWindow):
     """Main application window"""
     def __init__(self, tasks_dir):
@@ -373,7 +714,7 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout()
 
         # Header
-        header = QLabel("<h1>🤖 RaspAutomator Task Editor</h1>")
+        header = QLabel("<h1>RaspAutomator Task Editor</h1>")
         header.setStyleSheet("color: #4CAF50; padding: 20px;")
         header.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(header)
@@ -464,6 +805,21 @@ class MainWindow(QMainWindow):
                 "No Tasks Found",
                 "No tasks with trigger.json files were found in the tasks directory."
             )
+
+        # Add Service tab at the end
+        project_root = os.path.dirname(self.tasks_dir)
+        self.service_tab = ServiceTab(project_root)
+        self.tabs.addTab(self.service_tab, "Service")
+
+        # Auto-refresh service status when switching to Service tab
+        self.tabs.currentChanged.connect(self._on_tab_changed)
+
+    def _on_tab_changed(self, index):
+        """Refresh service status when switching to the Service tab"""
+        widget = self.tabs.widget(index)
+        if isinstance(widget, ServiceTab):
+            widget.refresh_status()
+            widget.refresh_logs()
 
 
 def set_dark_theme(app):

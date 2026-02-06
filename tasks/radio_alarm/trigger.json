@@ -1,14 +1,30 @@
 {
     "schedule_on": true,
     "timeout_on": false,
-    "days_of_week": [
-        "Monday",
-        "Tuesday",
-        "Wednesday",
-        "Thursday",
-        "Friday"
+    "schedules": [
+        {
+            "days": [
+                "Monday",
+                "Tuesday",
+                "Wednesday"
+            ],
+            "time": "08:15"
+        },
+        {
+            "days": [
+                "Thursday",
+                "Friday"
+            ],
+            "time": "09:00"
+        },
+        {
+            "days": [
+                "Saturday",
+                "Sunday"
+            ],
+            "time": "12:00"
+        }
     ],
-    "time_of_day": "11:04",
     "timeout_interval": 3600,
     "max_duration": 5400
 }

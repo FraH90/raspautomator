@@ -43,24 +43,42 @@ class Task:
     def load_trigger_config(self):
         config_path = os.path.join(os.path.dirname(self.task_module.__file__), 'trigger.json')
         with open(config_path, 'r') as f:
-            return json.load(f)
+            config = json.load(f)
+
+        # Backward compatibility: convert old format to new schedules format
+        if 'schedules' not in config and 'days_of_week' in config:
+            config['schedules'] = [{
+                'days': config.pop('days_of_week'),
+                'time': config.pop('time_of_day', '00:00')
+            }]
+
+        return config
 
     def calculate_next_run(self):
         if not self.config['schedule_on']:
-            return datetime.now()  # Next run is "now" if scheduling is off
+            return datetime.now()
+
         now = datetime.now()
-        time_of_day = datetime.strptime(self.config['time_of_day'], "%H:%M").time()
-        next_run = datetime.combine(now.date(), time_of_day)
-        while next_run <= now or next_run.strftime("%A") not in self.config['days_of_week']:
-            next_run += timedelta(days=1)
-        return next_run
+        schedules = self.config.get('schedules', [])
+        if not schedules:
+            return datetime.now()
+
+        # Find the earliest next run across all schedules
+        earliest = None
+        for schedule in schedules:
+            time_of_day = datetime.strptime(schedule['time'], "%H:%M").time()
+            candidate = datetime.combine(now.date(), time_of_day)
+            while candidate <= now or candidate.strftime("%A") not in schedule['days']:
+                candidate += timedelta(days=1)
+            if earliest is None or candidate < earliest:
+                earliest = candidate
+
+        return earliest
 
     def should_run(self):
-        # If in debug mode, always run
         if self.debug:
             return True
-            
-        # Normal schedule checking logic
+
         if not self.config.get('schedule_on', False):
             return True
 
@@ -68,10 +86,12 @@ class Task:
         current_day = current_time.strftime('%A')
         current_hour = current_time.strftime('%H:%M')
 
-        scheduled_days = self.config.get('days_of_week', [])
-        scheduled_time = self.config.get('time_of_day', '')
+        # Check against all schedules
+        for schedule in self.config.get('schedules', []):
+            if current_day in schedule.get('days', []) and current_hour == schedule.get('time', ''):
+                return True
 
-        return current_day in scheduled_days and current_hour == scheduled_time
+        return False
 
     def _execute_task_with_monitoring(self):
         """

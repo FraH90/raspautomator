@@ -1,10 +1,10 @@
 {
     "stop_time": "03:00",
     "bluetooth_devices": [
-      {
-        "name": "Carbonara Bedroom Speaker Logitech",
-        "mac_address": "EC:81:93:F8:23:2B"
-      }
+        {
+            "name": "Carbonara Bedroom Speaker Logitech",
+            "mac_address": "EC:81:93:F8:23:2B"
+        }
     ],
     "volume": {
         "system_volume": 70,
