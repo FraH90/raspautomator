@@ -61,13 +61,14 @@ class SystemVolumeController:
                 check=True
             )
 
-            # Look for bluez sink matching the MAC address
+            # Look for bluez sink/output matching the MAC address
+            # PulseAudio uses "bluez_sink", PipeWire uses "bluez_output"
             for line in result.stdout.splitlines():
-                if f"bluez_sink.{normalized_mac}" in line:
-                    # Extract sink ID (first column)
-                    sink_id = line.split()[0]
-                    self.logger.info(f"Found Bluetooth sink: {sink_id}")
-                    return sink_id
+                if normalized_mac in line:
+                    # Extract sink name (second column: e.g. "bluez_output.EC_81_93_F8_23_2B.1")
+                    sink_name = line.split()[1]
+                    self.logger.info(f"Found Bluetooth sink: {sink_name}")
+                    return sink_name
 
             self.logger.warning(f"No Bluetooth sink found for MAC address: {mac_address}")
             return None
