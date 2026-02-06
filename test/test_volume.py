@@ -7,7 +7,7 @@ import subprocess
 # Add src to path
 sys.path.insert(0, 'src')
 
-from task.volume_controller import SystemVolumeController
+from utils.volume_controller import SystemVolumeController
 
 MAC = "EC:81:93:F8:23:2B"
 

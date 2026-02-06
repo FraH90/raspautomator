@@ -12,8 +12,8 @@ import re
 from datetime import datetime, timedelta
 
 # Same as your radio example, but referencing the same package structure:
-from task.bluetooth_handler import BluetoothHandler
-from task.volume_controller import SystemVolumeController
+from utils.bluetooth_handler import BluetoothHandler
+from utils.volume_controller import SystemVolumeController
 
 CURRENT_TASK_DIR = os.path.dirname(__file__)
 CONFIG_FILE = os.path.join(CURRENT_TASK_DIR, 'config.json')

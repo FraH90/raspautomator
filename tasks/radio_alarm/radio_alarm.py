@@ -6,8 +6,8 @@ import vlc
 import os
 import threading
 import psutil
-from task.bluetooth_handler import BluetoothHandler
-from task.volume_controller import SystemVolumeController
+from utils.bluetooth_handler import BluetoothHandler
+from utils.volume_controller import SystemVolumeController
 import logging
 
 CURRENT_TASK_DIR = os.path.dirname(__file__)

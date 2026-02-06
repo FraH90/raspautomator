@@ -3,7 +3,7 @@ import importlib.util
 import pyRTOS
 from datetime import datetime, timedelta
 import json
-from .bluetooth_handler import BluetoothHandler  # Import it in Task class
+from utils.bluetooth_handler import BluetoothHandler
 from config_watcher import TaskRegistry
 import logging
 import threading
