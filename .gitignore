@@ -109,3 +109,6 @@ dmypy.json
 .DS_Store
 .Trashes
 Thumbs.db
+
+# Custom project file settings etc
+.pid

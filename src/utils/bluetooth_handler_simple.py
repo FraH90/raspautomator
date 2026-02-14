@@ -1,8 +1,11 @@
 import os
+import logging
 import pexpect
 
 CURRENT_TASK_DIR = os.path.dirname(__file__)
 CONFIG_FILE = os.path.join(CURRENT_TASK_DIR, 'config.json')
+
+logger = logging.getLogger(__name__)
 
 class BluetoothHandler:
     def __init__(self, mac_address):
@@ -14,7 +17,7 @@ class BluetoothHandler:
         return process.before.decode()
 
     def is_paired(self):
-        print(f"Checking if {self.mac_address} is paired...")
+        logger.info(f"Checking if {self.mac_address} is paired...")
         bluetoothctl = pexpect.spawn('sudo bluetoothctl')
         bluetoothctl.sendline(f'info {self.mac_address}')
         try:
@@ -27,7 +30,7 @@ class BluetoothHandler:
             return False
 
     def is_connected(self):
-        print(f"Checking if {self.mac_address} is connected...")
+        logger.info(f"Checking if {self.mac_address} is connected...")
         bluetoothctl = pexpect.spawn('sudo bluetoothctl')
         bluetoothctl.sendline(f'info {self.mac_address}')
         try:
@@ -41,7 +44,7 @@ class BluetoothHandler:
 
     def connect(self):
         if not self.is_paired():
-            print(f"Pairing with {self.mac_address}...")
+            logger.info(f"Pairing with {self.mac_address}...")
             bluetoothctl = pexpect.spawn('sudo bluetoothctl')
             bluetoothctl.sendline(f'pair {self.mac_address}')
             bluetoothctl.expect('Pairing successful', timeout=10)
@@ -49,23 +52,23 @@ class BluetoothHandler:
             bluetoothctl.expect('trust succeeded', timeout=10)
             bluetoothctl.sendline('exit')
         else:
-            print(f"{self.mac_address} is already paired.")
+            logger.info(f"{self.mac_address} is already paired.")
 
         if not self.is_connected():
-            print(f"Connecting to {self.mac_address}...")
+            logger.info(f"Connecting to {self.mac_address}...")
             bluetoothctl = pexpect.spawn('sudo bluetoothctl')
             bluetoothctl.sendline(f'connect {self.mac_address}')
             try:
                 bluetoothctl.expect('Connection successful', timeout=10)
-                print("Successfully connected to the Bluetooth speaker.")
+                logger.info("Successfully connected to the Bluetooth speaker.")
             except pexpect.TIMEOUT:
-                print("Failed to connect to the Bluetooth speaker.")
+                logger.warning("Failed to connect to the Bluetooth speaker.")
             bluetoothctl.sendline('exit')
 
         # Double-check connection status
         if self.is_connected():
-            print("Verified: Successfully connected to the Bluetooth speaker.")
+            logger.info("Verified: Successfully connected to the Bluetooth speaker.")
             return True
         else:
-            print("Failed to verify connection to the Bluetooth speaker.")
+            logger.warning("Failed to verify connection to the Bluetooth speaker.")
             return False

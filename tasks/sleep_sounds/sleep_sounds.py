@@ -42,10 +42,6 @@ class SleepSoundsPlayer:
             return
 
         self.logger = logging.getLogger(__name__)
-        logging.basicConfig(
-            level=logging.INFO,
-            format='%(asctime)s [%(levelname)s] %(name)s: %(message)s'
-        )
 
         self.load_config()
         self.is_playing = False
@@ -279,7 +275,7 @@ def check_if_already_running():
                 try:
                     process = psutil.Process(old_pid)
                     if "python" in process.name().lower():
-                        print(f"Another instance is already running (PID: {old_pid})")
+                        logging.warning(f"Another instance is already running (PID: {old_pid})")
                         sys.exit()
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     pass

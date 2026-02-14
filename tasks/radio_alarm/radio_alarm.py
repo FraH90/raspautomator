@@ -66,7 +66,7 @@ class RadioPlayer:
             stop_event: threading.Event() that signals when to stop playing
         """
         if self.is_playing:
-            print("Radio is already playing. Skipping new play request.")
+            self.logger.info("Radio is already playing. Skipping new play request.")
             return
 
         self.is_playing = True  # Set the flag to True when starting to play
@@ -79,15 +79,15 @@ class RadioPlayer:
             player.audio_set_volume(self.vlc_volume)
             player.play()
 
-            print(f"{time.strftime('%H:%M')} - Playing radio {radio_name}")
+            self.logger.info(f"Playing radio {radio_name}")
 
             # Play until stop_event is set by the orchestrator
             while not stop_event.is_set():
                 time.sleep(1)
 
-            print(f"{time.strftime('%H:%M')} - Stop event received, stopping radio {radio_name}")
+            self.logger.info(f"Stop event received, stopping radio {radio_name}")
         finally:
-            print(f"{time.strftime('%H:%M')} - Stopping radio {radio_name}")
+            self.logger.info(f"Stopping radio {radio_name}")
             player.stop()
             player.release()
             instance.release()
@@ -149,7 +149,7 @@ def check_if_already_running():
                 try:
                     process = psutil.Process(old_pid)
                     if "python" in process.name().lower():
-                        print(f"Another instance is already running (PID: {old_pid})")
+                        logging.warning(f"Another instance is already running (PID: {old_pid})")
                         sys.exit()
                 except (psutil.NoSuchProcess, psutil.AccessDenied):
                     # Process doesn't exist anymore or we can't access it
