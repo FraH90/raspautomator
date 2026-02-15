@@ -120,12 +120,12 @@ class SleepSoundsPlayer:
                 return False
 
             # Loop that single file until stop_event is set (duration controlled by orchestrator)
-            self.loop_indefinitely(audio_path, stop_event)
+            self.loop_indefinitely(audio_path, stop_event, volume_controller)
         except Exception as e:
             self.logger.error(f"Error in start(): {e}")
             return False
 
-    def loop_indefinitely(self, audio_path, stop_event):
+    def loop_indefinitely(self, audio_path, stop_event, volume_controller=None):
         """
         Continuously loops a single audio file until stop_event is set.
         Duration is controlled by orchestrator via max_duration or .terminate files.
@@ -133,6 +133,7 @@ class SleepSoundsPlayer:
         Args:
             audio_path: Path to the audio file to loop
             stop_event: threading.Event() that signals when to stop
+            volume_controller: Optional SystemVolumeController to re-set volume after playback starts
         """
         self.is_playing = True
         self.logger.info(f"Playing sleep sounds (duration controlled by orchestrator)")
@@ -156,7 +157,20 @@ class SleepSoundsPlayer:
 
         # Start playing in loop
         list_player.play()
+
+        # Wait a moment for VLC to actually start playing
+        time.sleep(2)
+
         self.logger.info(f"Now looping: {audio_path}")
+        self.logger.info(f"VLC volume set to {self.vlc_volume}%")
+
+        # Re-set system volume AFTER VLC starts to force AVRCP sync
+        if volume_controller:
+            self.logger.info("Re-setting system volume after VLC started...")
+            if volume_controller.set_bluetooth_volume(self.bluetooth_mac, self.system_volume):
+                self.logger.info(f"System volume re-confirmed at {self.system_volume}%")
+            else:
+                self.logger.warning("Failed to re-set system volume")
 
         try:
             # Loop until stop_event is set by the orchestrator
