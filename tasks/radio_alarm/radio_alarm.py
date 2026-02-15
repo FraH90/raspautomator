@@ -6,6 +6,7 @@ import vlc
 import os
 import threading
 import psutil
+import subprocess
 from utils.bluetooth_handler import BluetoothHandler
 from utils.volume_controller import SystemVolumeController
 import logging
@@ -55,7 +56,71 @@ class RadioPlayer:
         with open(RADIO_STREAM_FILE, 'r') as f:
             return json.load(f)
 
-    def play_radio(self, stream_url, radio_name, stop_event):
+    def debug_audio_state(self, mac_address):
+        """Debug function to log complete Bluetooth and audio state"""
+        self.logger.info("=" * 80)
+        self.logger.info("DEBUG: Full Audio & Bluetooth State")
+        self.logger.info("=" * 80)
+
+        # 1. Check Bluetooth device connection status
+        try:
+            result = subprocess.run(
+                ["bluetoothctl", "info", mac_address],
+                capture_output=True, text=True, timeout=5
+            )
+            self.logger.info("BLUETOOTH INFO:")
+            for line in result.stdout.splitlines():
+                if any(keyword in line for keyword in ["Connected:", "Paired:", "Trusted:", "Name:"]):
+                    self.logger.info(f"  {line.strip()}")
+        except Exception as e:
+            self.logger.error(f"Failed to get Bluetooth info: {e}")
+
+        # 2. List all PulseAudio/PipeWire sinks
+        try:
+            result = subprocess.run(
+                ["pactl", "list", "short", "sinks"],
+                capture_output=True, text=True, timeout=5
+            )
+            self.logger.info("AVAILABLE AUDIO SINKS:")
+            for line in result.stdout.splitlines():
+                self.logger.info(f"  {line.strip()}")
+        except Exception as e:
+            self.logger.error(f"Failed to list sinks: {e}")
+
+        # 3. Get detailed volume info for Bluetooth sink
+        try:
+            normalized_mac = mac_address.replace(":", "_")
+            result = subprocess.run(
+                ["pactl", "list", "sinks"],
+                capture_output=True, text=True, timeout=5
+            )
+            lines = result.stdout.splitlines()
+            in_bt_sink = False
+            self.logger.info("BLUETOOTH SINK DETAILS:")
+            for line in lines:
+                if normalized_mac in line or "bluez_output" in line:
+                    in_bt_sink = True
+                if in_bt_sink:
+                    if any(keyword in line for keyword in ["Name:", "Volume:", "Mute:", "State:"]):
+                        self.logger.info(f"  {line.strip()}")
+                    if line.startswith("Sink #") and normalized_mac not in line:
+                        break
+        except Exception as e:
+            self.logger.error(f"Failed to get sink details: {e}")
+
+        # 4. Get default sink
+        try:
+            result = subprocess.run(
+                ["pactl", "get-default-sink"],
+                capture_output=True, text=True, timeout=5
+            )
+            self.logger.info(f"DEFAULT SINK: {result.stdout.strip()}")
+        except Exception as e:
+            self.logger.error(f"Failed to get default sink: {e}")
+
+        self.logger.info("=" * 80)
+
+    def play_radio(self, stream_url, radio_name, stop_event, volume_controller=None):
         """
         Play radio stream until stop_event is set.
         Duration is controlled by orchestrator via max_duration or .terminate files.
@@ -64,6 +129,7 @@ class RadioPlayer:
             stream_url: URL of the radio stream
             radio_name: Name of the radio station
             stop_event: threading.Event() that signals when to stop playing
+            volume_controller: Optional SystemVolumeController to re-set volume after playback starts
         """
         if self.is_playing:
             self.logger.info("Radio is already playing. Skipping new play request.")
@@ -79,7 +145,21 @@ class RadioPlayer:
             player.audio_set_volume(self.vlc_volume)
             player.play()
 
+            # Wait a moment for VLC to actually start playing
+            time.sleep(2)
+
             self.logger.info(f"Playing radio {radio_name}")
+            self.logger.info(f"VLC volume set to {self.vlc_volume}%")
+
+            # Re-set system volume AFTER VLC starts to force AVRCP sync
+            if volume_controller:
+                self.logger.info("Re-setting system volume after VLC started...")
+                if volume_controller.set_bluetooth_volume(self.bluetooth_mac, self.system_volume):
+                    self.logger.info(f"System volume re-confirmed at {self.system_volume}%")
+                    # DEBUG: Check if volume actually changed
+                    self.debug_audio_state(self.bluetooth_mac)
+                else:
+                    self.logger.warning("Failed to re-set system volume")
 
             # Play until stop_event is set by the orchestrator
             while not stop_event.is_set():
@@ -117,6 +197,9 @@ class RadioPlayer:
                 self.logger.info("Waiting for PulseAudio to detect Bluetooth sink...")
                 time.sleep(3)
 
+                # DEBUG: Log full audio and Bluetooth state
+                self.debug_audio_state(self.bluetooth_mac)
+
                 # Set system volume before playing
                 volume_controller = SystemVolumeController(self.logger)
                 if volume_controller.set_bluetooth_volume(self.bluetooth_mac, self.system_volume):
@@ -124,7 +207,12 @@ class RadioPlayer:
                 else:
                     self.logger.warning(f"Failed to set system volume, continuing with current volume")
 
-                self.play_radio(radio_stream_url, radio_name, stop_event)
+                # DEBUG: Log audio state AFTER setting volume
+                self.logger.info("DEBUG: Audio state AFTER volume set:")
+                self.debug_audio_state(self.bluetooth_mac)
+
+                # Start playing radio
+                self.play_radio(radio_stream_url, radio_name, stop_event, volume_controller)
             else:
                 self.logger.error("Failed to connect to Bluetooth speaker. Exiting.")
                 return False

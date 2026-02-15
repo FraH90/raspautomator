@@ -112,3 +112,4 @@ Thumbs.db
 
 # Custom project file settings etc
 .pid
+tasks/radio_alarm/radio_alarm.pid
